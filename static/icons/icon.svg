@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#005C9E"/>
+  <path d="M180 80 L332 80 L332 180 L432 180 L432 332 L332 332 L332 432 L180 432 L180 332 L80 332 L80 180 L180 180 Z" fill="#00A19A"/>
+  <text x="256" y="480" text-anchor="middle" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="white">TO</text>
+</svg>
