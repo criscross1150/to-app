@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Elementos del DOM
     const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('fileInput');
+    const cameraInput = document.getElementById('cameraInput');
+    const btnCamera = document.getElementById('btnCamera');
+    const btnGallery = document.getElementById('btnGallery');
     const previewContainer = document.getElementById('previewContainer');
     const imagePreview = document.getElementById('imagePreview');
     const btnCambiar = document.getElementById('btnCambiar');
@@ -208,7 +211,22 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // ===== EVENT LISTENERS =====
     
-    uploadArea.addEventListener('click', () => fileInput.click());
+    // Botón de cámara - abre cámara directamente
+    btnCamera.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cameraInput.click();
+    });
+    
+    // Botón de galería - abre selector de archivos
+    btnGallery.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.click();
+    });
+    
+    // Input de cámara
+    cameraInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) handleFile(e.target.files[0]);
+    });
     
     uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -245,6 +263,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     btnCambiar.addEventListener('click', () => {
         selectedFile = null;
         fileInput.value = '';
+        cameraInput.value = '';
         previewContainer.style.display = 'none';
         uploadArea.style.display = 'block';
     });

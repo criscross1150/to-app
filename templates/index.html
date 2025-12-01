@@ -47,15 +47,23 @@
         <main>
             <section class="upload-section">
                 <h2>Cargar Planilla</h2>
-                <p>Sube una imagen de la planilla de pacientes</p>
+                <p>Toma una foto o sube una imagen de la planilla</p>
                 
                 <div class="upload-area" id="uploadArea">
                     <div class="upload-content">
-                        <span class="upload-icon">📷</span>
-                        <p class="upload-text">Arrastra una imagen aquí</p>
-                        <p class="upload-subtext">o</p>
-                        <label for="fileInput" class="upload-btn">Seleccionar archivo</label>
+                        <div class="upload-buttons">
+                            <button class="btn-capture" id="btnCamera">
+                                <span class="capture-icon">📷</span>
+                                <span>Tomar Foto</span>
+                            </button>
+                            <button class="btn-capture btn-gallery" id="btnGallery">
+                                <span class="capture-icon">🖼️</span>
+                                <span>Galería</span>
+                            </button>
+                        </div>
+                        <p class="upload-subtext">o arrastra una imagen aquí</p>
                         <input type="file" id="fileInput" accept="image/*" hidden>
+                        <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
                     </div>
                 </div>
                 
