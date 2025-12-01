@@ -925,26 +925,34 @@ function initVoiceDictation() {
     recognition.lang = 'es-CL'; // Español de Chile
     recognition.continuous = true; // Grabación continua
     recognition.interimResults = true; // Resultados parciales
+    recognition.maxAlternatives = 1; // Solo la mejor alternativa
     
     let isRecording = false;
     let finalTranscript = '';
+    let lastResultIndex = 0;
     
     // Evento de resultado
     recognition.onresult = (event) => {
         let interimTranscript = '';
         
+        // Procesar solo resultados nuevos desde el último índice procesado
         for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
+            const result = event.results[i];
+            const transcript = result[0].transcript;
             
-            if (event.results[i].isFinal) {
-                finalTranscript += transcript + ' ';
+            if (result.isFinal) {
+                // Solo agregar si es un resultado final nuevo
+                finalTranscript += transcript.trim() + ' ';
+                lastResultIndex = i + 1;
             } else {
-                interimTranscript += transcript;
+                // Resultados intermedios (en proceso)
+                interimTranscript = transcript;
             }
         }
         
-        // Mostrar texto (final + interim en gris)
-        transcriptionText.value = finalTranscript + interimTranscript;
+        // Mostrar texto final + lo que se está procesando
+        const displayText = finalTranscript + (interimTranscript ? interimTranscript : '');
+        transcriptionText.value = displayText.trim();
         
         // Auto-scroll al final
         transcriptionText.scrollTop = transcriptionText.scrollHeight;
@@ -999,7 +1007,8 @@ function initVoiceDictation() {
             recognition.stop();
         } else {
             // Mantener el texto existente si hay
-            finalTranscript = transcriptionText.value ? transcriptionText.value + ' ' : '';
+            finalTranscript = transcriptionText.value ? transcriptionText.value.trim() + ' ' : '';
+            lastResultIndex = 0; // Reiniciar índice de resultados
             recognition.start();
         }
     });
@@ -1008,6 +1017,7 @@ function initVoiceDictation() {
     btnClearText.addEventListener('click', () => {
         transcriptionText.value = '';
         finalTranscript = '';
+        lastResultIndex = 0;
     });
     
     // Botón de copiar
