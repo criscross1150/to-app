@@ -6,8 +6,8 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 
-# API Key de Gemini - desde variable de entorno o hardcodeada
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyAN1dOKZsyenLxTfuQU9uGYNxsTGCTAuvU')
+# API Key de Gemini - SOLO desde variable de entorno (seguro)
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 
 # Crear carpeta de uploads si no existe
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
