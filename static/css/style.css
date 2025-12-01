@@ -925,6 +925,12 @@ footer {
     font-size: 0.85rem;
 }
 
+footer .developer-credit {
+    font-size: 0.7rem;
+    color: #aaa;
+    margin-top: 5px;
+}
+
 /* Modal API Key */
 .api-modal {
     position: fixed;
