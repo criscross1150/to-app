@@ -20,7 +20,8 @@ USUARIOS = {
     'ingrid': {'password': 'to2025', 'nombre': 'Ingrid'},
     'carla': {'password': 'to2025', 'nombre': 'Carla'},
     'tatiana': {'password': 'to2025', 'nombre': 'Tatiana'},
-    'jorge': {'password': 'to2025', 'nombre': 'Jorge'}
+    'jorge': {'password': 'to2025', 'nombre': 'Jorge'},
+    'invitado': {'password': 'to2025', 'nombre': 'Invitado'}
 }
 
 class User(UserMixin):
@@ -48,7 +49,7 @@ def login():
     if request.method == 'POST':
         data = request.get_json() if request.is_json else request.form
         username = data.get('username', '').lower().strip()
-        password = data.get('password', '')
+        password = data.get('password', '').strip()
         
         if username in USUARIOS and USUARIOS[username]['password'] == password:
             user = User(username)
