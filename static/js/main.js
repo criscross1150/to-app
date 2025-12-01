@@ -887,4 +887,150 @@ document.addEventListener('DOMContentLoaded', async function() {
         const urlWhatsApp = `https://wa.me/?text=${mensajeCodificado}`;
         window.open(urlWhatsApp, '_blank');
     };
+    
+    // ===== DICTADO DE VOZ (Speech Recognition) =====
+    initVoiceDictation();
 });
+
+// Función de inicialización del dictado de voz (fuera del DOMContentLoaded para evitar errores si no existen los elementos)
+function initVoiceDictation() {
+    const btnRecord = document.getElementById('btnRecord');
+    const recordStatus = document.getElementById('recordStatus');
+    const transcriptionText = document.getElementById('transcriptionText');
+    const btnClearText = document.getElementById('btnClearText');
+    const btnCopyText = document.getElementById('btnCopyText');
+    
+    if (!btnRecord) return; // Si no existe la sección de dictado, salir
+    
+    // Verificar soporte de Web Speech API
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+        recordStatus.textContent = 'Tu navegador no soporta dictado por voz';
+        btnRecord.disabled = true;
+        btnRecord.style.opacity = '0.5';
+        return;
+    }
+    
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'es-CL'; // Español de Chile
+    recognition.continuous = true; // Grabación continua
+    recognition.interimResults = true; // Resultados parciales
+    
+    let isRecording = false;
+    let finalTranscript = '';
+    
+    // Evento de resultado
+    recognition.onresult = (event) => {
+        let interimTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            
+            if (event.results[i].isFinal) {
+                finalTranscript += transcript + ' ';
+            } else {
+                interimTranscript += transcript;
+            }
+        }
+        
+        // Mostrar texto (final + interim en gris)
+        transcriptionText.value = finalTranscript + interimTranscript;
+        
+        // Auto-scroll al final
+        transcriptionText.scrollTop = transcriptionText.scrollHeight;
+    };
+    
+    // Evento de inicio
+    recognition.onstart = () => {
+        isRecording = true;
+        btnRecord.classList.add('recording');
+        btnRecord.innerHTML = '<i data-lucide="mic-off" class="icon-record"></i>';
+        recordStatus.textContent = 'Grabando... (toca para detener)';
+        recordStatus.classList.add('active');
+        
+        // Reinicializar iconos de Lucide
+        if (window.lucide) lucide.createIcons();
+    };
+    
+    // Evento de fin
+    recognition.onend = () => {
+        isRecording = false;
+        btnRecord.classList.remove('recording');
+        btnRecord.innerHTML = '<i data-lucide="mic" class="icon-record"></i>';
+        recordStatus.textContent = 'Presiona para grabar';
+        recordStatus.classList.remove('active');
+        
+        // Reinicializar iconos de Lucide
+        if (window.lucide) lucide.createIcons();
+    };
+    
+    // Evento de error
+    recognition.onerror = (event) => {
+        console.error('Error de reconocimiento:', event.error);
+        
+        let errorMsg = 'Error de grabación';
+        if (event.error === 'no-speech') {
+            errorMsg = 'No se detectó voz. Intenta de nuevo.';
+        } else if (event.error === 'not-allowed') {
+            errorMsg = 'Permiso de micrófono denegado';
+        } else if (event.error === 'network') {
+            errorMsg = 'Error de red. Verifica tu conexión.';
+        }
+        
+        recordStatus.textContent = errorMsg;
+        setTimeout(() => {
+            recordStatus.textContent = 'Presiona para grabar';
+        }, 3000);
+    };
+    
+    // Botón de grabar
+    btnRecord.addEventListener('click', () => {
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            // Mantener el texto existente si hay
+            finalTranscript = transcriptionText.value ? transcriptionText.value + ' ' : '';
+            recognition.start();
+        }
+    });
+    
+    // Botón de limpiar
+    btnClearText.addEventListener('click', () => {
+        transcriptionText.value = '';
+        finalTranscript = '';
+    });
+    
+    // Botón de copiar
+    btnCopyText.addEventListener('click', async () => {
+        const text = transcriptionText.value.trim();
+        
+        if (!text) {
+            alert('No hay texto para copiar');
+            return;
+        }
+        
+        try {
+            await navigator.clipboard.writeText(text);
+            
+            // Feedback visual
+            const originalText = btnCopyText.innerHTML;
+            btnCopyText.innerHTML = '<i data-lucide="check" class="icon-xs"></i> ¡Copiado!';
+            btnCopyText.style.background = 'var(--verde-primario)';
+            
+            if (window.lucide) lucide.createIcons();
+            
+            setTimeout(() => {
+                btnCopyText.innerHTML = originalText;
+                btnCopyText.style.background = '';
+                if (window.lucide) lucide.createIcons();
+            }, 2000);
+            
+        } catch (err) {
+            // Fallback para navegadores más antiguos
+            transcriptionText.select();
+            document.execCommand('copy');
+            alert('Texto copiado al portapapeles');
+        }
+    });
+}

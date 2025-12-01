@@ -127,6 +127,36 @@
                     </div>
                 </div>
             </section>
+            
+            <!-- Sección de Dictado de Evolución -->
+            <section class="dictation-section">
+                <div class="section-header">
+                    <h2><i data-lucide="mic" class="icon-title"></i> Dictado de Evolución</h2>
+                </div>
+                <p class="dictation-description">Graba tu voz para transcribir la evolución del paciente</p>
+                
+                <div class="dictation-container">
+                    <div class="dictation-controls">
+                        <button class="btn-record" id="btnRecord" title="Iniciar grabación">
+                            <i data-lucide="mic" class="icon-record"></i>
+                        </button>
+                        <span class="record-status" id="recordStatus">Presiona para grabar</span>
+                    </div>
+                    
+                    <div class="dictation-output">
+                        <label for="transcriptionText">Texto transcrito:</label>
+                        <textarea id="transcriptionText" placeholder="El texto transcrito aparecerá aquí..." rows="6"></textarea>
+                        <div class="dictation-actions">
+                            <button class="btn btn-secondary" id="btnClearText" title="Limpiar texto">
+                                <i data-lucide="eraser" class="icon-xs"></i> Limpiar
+                            </button>
+                            <button class="btn btn-primary" id="btnCopyText" title="Copiar al portapapeles">
+                                <i data-lucide="copy" class="icon-xs"></i> Copiar para RCE
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
         
         <footer>
