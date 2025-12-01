@@ -17,10 +17,10 @@ login_manager.login_view = 'login'
 # Usuarios simples (en producción esto iría en una base de datos)
 USUARIOS = {
     'cristian': {'password': 'to2025', 'nombre': 'Cristián López'},
-    'usuario1': {'password': 'to2025', 'nombre': 'Usuario 1'},
-    'usuario2': {'password': 'to2025', 'nombre': 'Usuario 2'},
-    'usuario3': {'password': 'to2025', 'nombre': 'Usuario 3'},
-    'usuario4': {'password': 'to2025', 'nombre': 'Usuario 4'}
+    'ingrid': {'password': 'to2025', 'nombre': 'Ingrid'},
+    'carla': {'password': 'to2025', 'nombre': 'Carla'},
+    'tatiana': {'password': 'to2025', 'nombre': 'Tatiana'},
+    'jorge': {'password': 'to2025', 'nombre': 'Jorge'}
 }
 
 class User(UserMixin):
