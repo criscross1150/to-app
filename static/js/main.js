@@ -397,7 +397,41 @@ document.addEventListener('DOMContentLoaded', async function() {
         pacientesMQ.forEach(p => mqList.appendChild(crearTarjetaPaciente(p, 'mq')));
         
         patientsSection.style.display = 'block';
+        
+        // Aplicar vista guardada (sin re-renderizar)
+        const savedView = localStorage.getItem('to_app_view') || 'compact';
+        const container = document.querySelector('.patients-container');
+        container.classList.remove('compact-view', 'detailed-view');
+        container.classList.add(`${savedView}-view`);
+        
+        // Actualizar botones
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === savedView);
+        });
     }
+    
+    // ===== VISTAS =====
+    let vistaActual = 'compact';
+    
+    function aplicarVista(vista) {
+        vistaActual = vista;
+        const container = document.querySelector('.patients-container');
+        container.classList.remove('compact-view', 'detailed-view');
+        container.classList.add(`${vista}-view`);
+        
+        // Actualizar botones
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === vista);
+        });
+        
+        // Guardar preferencia
+        localStorage.setItem('to_app_view', vista);
+    }
+    
+    // Event listeners para toggle de vista
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', () => aplicarVista(btn.dataset.view));
+    });
     
     // ===== CREAR TARJETA DE PACIENTE =====
     
@@ -406,6 +440,24 @@ document.addEventListener('DOMContentLoaded', async function() {
         card.className = `patient-card ${tipo}`;
         card.id = `patient-${paciente.id}`;
         
+        // Generar checkboxes inline para vista compacta
+        let inlineChecksHTML = '';
+        for (let i = 0; i < paciente.indicaciones; i++) {
+            const checkedSesion = paciente.sesionesRealizadas[i] ? 'checked' : '';
+            const checkedRCE = paciente.sesionesRCE[i] ? 'checked' : '';
+            inlineChecksHTML += `
+                <label class="mini-check sesion ${checkedSesion}" onclick="event.stopPropagation()">
+                    <input type="checkbox" ${checkedSesion} onchange="window.marcarSesion('${paciente.id}', ${i}, this.checked); this.parentElement.classList.toggle('checked', this.checked)">
+                    S${i+1}
+                </label>
+                <label class="mini-check rce ${checkedRCE ? 'checked' : ''}" onclick="event.stopPropagation()">
+                    <input type="checkbox" ${checkedRCE} onchange="window.marcarRCE('${paciente.id}', ${i}, this.checked); this.parentElement.classList.toggle('checked', this.checked)">
+                    R${i+1}
+                </label>
+            `;
+        }
+        
+        // Generar sesiones para vista detallada
         let sesionesHTML = '';
         for (let i = 0; i < paciente.indicaciones; i++) {
             const checkedSesion = paciente.sesionesRealizadas[i] ? 'checked' : '';
@@ -424,13 +476,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         
         const mostrarBtnAgregar = paciente.indicaciones < 2;
+        const diagCorto = paciente.diagnostico.length > 12 ? paciente.diagnostico.substring(0, 12) + '...' : paciente.diagnostico;
         
         card.innerHTML = `
             <div class="row-main" onclick="window.toggleExpand('${paciente.id}')">
                 <div class="col-room ${tipo}">${paciente.habitacion}</div>
                 <div class="col-data">
                     <span class="d-name">${paciente.nombre}</span>
-                    <span class="d-sub">${paciente.edad}a · ${getIconoDiagnostico(paciente.diagnostico)} ${paciente.diagnostico}</span>
+                    <span class="d-sub">${paciente.edad}a · ${getIconoDiagnostico(paciente.diagnostico)} ${diagCorto}</span>
+                </div>
+                <div class="inline-checks" onclick="event.stopPropagation()">
+                    ${inlineChecksHTML}
+                </div>
+                <div class="quick-actions">
+                    <button class="quick-btn" onclick="event.stopPropagation(); window.editarPaciente('${paciente.id}')" title="Editar">✏️</button>
                 </div>
                 <div class="col-status">
                     <span class="status-dot ${obtenerEstadoPaciente(paciente)}" id="status-${paciente.id}"></span>

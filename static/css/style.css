@@ -314,12 +314,39 @@ section > p {
 
 .section-header h2 {
     margin: 0;
+    font-size: 1rem;
 }
 
 .header-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
+}
+
+/* View Toggle */
+.view-toggle {
+    display: flex;
+    background: #e0e0e0;
+    border-radius: 6px;
+    padding: 2px;
+}
+
+.view-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.view-btn.active {
+    background: white;
+    color: var(--azul-primario);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 .btn-clear {
@@ -571,6 +598,126 @@ section > p {
 .status-dot.complete {
     background: #28a745;
     box-shadow: 0 0 4px #28a745;
+}
+
+/* ===== VISTA COMPACTA (Opción 1) ===== */
+/* Checkboxes visibles en la fila principal */
+.compact-view .patient-card {
+    margin-bottom: 4px;
+}
+
+.compact-view .row-main {
+    padding: 6px 8px;
+}
+
+.compact-view .col-room {
+    width: 38px;
+    height: 38px;
+    font-size: 0.7rem;
+}
+
+.compact-view .col-data {
+    padding: 0 6px;
+}
+
+.compact-view .d-name {
+    font-size: 0.8rem;
+}
+
+.compact-view .d-sub {
+    font-size: 0.65rem;
+}
+
+.compact-view .col-status {
+    display: none;
+}
+
+.compact-view .inline-checks {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    margin-left: auto;
+}
+
+.compact-view .check-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+}
+
+.compact-view .check-label {
+    font-size: 0.5rem;
+    color: #888;
+    text-transform: uppercase;
+}
+
+.compact-view .check-row {
+    display: flex;
+    gap: 2px;
+}
+
+.compact-view .mini-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    border: 2px solid #ddd;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    transition: all 0.2s;
+}
+
+.compact-view .mini-check.checked {
+    background: var(--verde-primario);
+    border-color: var(--verde-primario);
+    color: white;
+}
+
+.compact-view .mini-check.sesion.checked {
+    background: var(--azul-primario);
+    border-color: var(--azul-primario);
+}
+
+.compact-view .mini-check input {
+    display: none;
+}
+
+.compact-view .quick-actions {
+    display: flex;
+    gap: 4px;
+    margin-left: 6px;
+}
+
+.compact-view .quick-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 4px;
+    background: #f0f0f0;
+    cursor: pointer;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.compact-view .quick-btn:hover {
+    background: #e0e0e0;
+}
+
+/* ===== VISTA DETALLADA (Opción 2) ===== */
+.detailed-view .row-expand {
+    max-height: none;
+    overflow: visible;
+    border-top: 1px solid #eee;
+}
+
+.detailed-view .row-expand.open {
+    max-height: none;
 }
 
 /* Fila expandible */
