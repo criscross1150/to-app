@@ -133,14 +133,25 @@
                 <div class="section-header">
                     <h2><i data-lucide="mic" class="icon-title"></i> Dictado de Evolución</h2>
                 </div>
-                <p class="dictation-description">Graba tu voz para transcribir la evolución del paciente</p>
+                <p class="dictation-description">Selecciona un paciente y graba la evolución para el RCE</p>
                 
                 <div class="dictation-container">
+                    <div class="patient-selector">
+                        <label for="patientSelect"><i data-lucide="user" class="icon-xs"></i> Paciente:</label>
+                        <select id="patientSelect">
+                            <option value="" disabled selected>-- Seleccionar paciente --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="selected-patient-info" id="selectedPatientInfo" style="display: none;">
+                        <span class="patient-badge" id="patientBadge"></span>
+                    </div>
+                    
                     <div class="dictation-controls">
                         <button class="btn-record" id="btnRecord" title="Iniciar grabación">
                             <i data-lucide="mic" class="icon-record"></i>
                         </button>
-                        <span class="record-status" id="recordStatus">Presiona para grabar</span>
+                        <span class="record-status" id="recordStatus">Selecciona un paciente para grabar</span>
                     </div>
                     
                     <div class="dictation-output">
@@ -150,8 +161,14 @@
                             <button class="btn btn-secondary" id="btnClearText" title="Limpiar texto">
                                 <i data-lucide="eraser" class="icon-xs"></i> Limpiar
                             </button>
-                            <button class="btn btn-primary" id="btnCopyText" title="Copiar al portapapeles">
-                                <i data-lucide="copy" class="icon-xs"></i> Copiar para RCE
+                            <button class="btn btn-secondary" id="btnCopyText" title="Copiar al portapapeles">
+                                <i data-lucide="copy" class="icon-xs"></i> Copiar
+                            </button>
+                            <button class="btn btn-whatsapp-share" id="btnShareWhatsApp" title="Enviar por WhatsApp">
+                                <i data-lucide="message-circle" class="icon-xs"></i> WhatsApp
+                            </button>
+                            <button class="btn btn-gmail-share" id="btnShareGmail" title="Enviar por Gmail">
+                                <i data-lucide="mail" class="icon-xs"></i> Gmail
                             </button>
                         </div>
                     </div>

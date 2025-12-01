@@ -40,6 +40,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     let selectedFile = null;
     let pacientesData = [];
     
+    // Exponer pacientesData globalmente para el selector de dictado
+    window.pacientesData = pacientesData;
+    
     // ===== FUNCIONES SUPABASE =====
     
     async function guardarPacienteDB(paciente) {
@@ -397,6 +400,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         pacientesMQ.forEach(p => mqList.appendChild(crearTarjetaPaciente(p, 'mq')));
         
         patientsSection.style.display = 'block';
+        
+        // Actualizar referencia global y selector de pacientes para dictado
+        window.pacientesData = pacientesData;
+        if (typeof populatePatientSelector === 'function') {
+            populatePatientSelector();
+        }
         
         // Aplicar vista guardada (sin re-renderizar)
         const savedView = localStorage.getItem('to_app_view') || 'compact';
@@ -1033,4 +1042,110 @@ function initVoiceDictation() {
             alert('Texto copiado al portapapeles');
         }
     });
+    
+    // Poblar selector de pacientes
+    const patientSelect = document.getElementById('patientSelect');
+    if (patientSelect && window.pacientesData && window.pacientesData.length > 0) {
+        populatePatientSelector();
+    }
+    
+    // Botón compartir WhatsApp
+    const btnShareWhatsapp = document.getElementById('btn-share-whatsapp');
+    if (btnShareWhatsapp) {
+        btnShareWhatsapp.addEventListener('click', () => {
+            shareViaWhatsApp(transcriptionText, patientSelect);
+        });
+    }
+    
+    // Botón compartir Email
+    const btnShareEmail = document.getElementById('btn-share-email');
+    if (btnShareEmail) {
+        btnShareEmail.addEventListener('click', () => {
+            shareViaEmail(transcriptionText, patientSelect);
+        });
+    }
+}
+
+// Función para poblar el selector de pacientes
+function populatePatientSelector() {
+    const patientSelect = document.getElementById('patientSelect');
+    if (!patientSelect || !window.pacientesData) return;
+    
+    // Limpiar opciones existentes excepto la primera
+    patientSelect.innerHTML = '<option value="">-- Seleccionar paciente --</option>';
+    
+    // Agregar cada paciente
+    window.pacientesData.forEach((paciente, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `${paciente.nombre} - ${paciente.prevision || 'Sin previsión'}`;
+        patientSelect.appendChild(option);
+    });
+}
+
+// Función para compartir por WhatsApp
+function shareViaWhatsApp(transcriptionText, patientSelect) {
+    const text = transcriptionText.value.trim();
+    
+    if (!text) {
+        alert('No hay texto para compartir');
+        return;
+    }
+    
+    let message = '';
+    
+    // Si hay paciente seleccionado, agregar info
+    if (patientSelect && patientSelect.value !== '' && window.pacientesData) {
+        const paciente = window.pacientesData[parseInt(patientSelect.value)];
+        if (paciente) {
+            message = `*EVOLUCIÓN TERAPIA OCUPACIONAL*\n\n`;
+            message += `*Paciente:* ${paciente.nombre}\n`;
+            if (paciente.prevision) message += `*Previsión:* ${paciente.prevision}\n`;
+            if (paciente.habitacion) message += `*Habitación:* ${paciente.habitacion}\n`;
+            message += `*Fecha:* ${new Date().toLocaleDateString('es-CL')}\n\n`;
+            message += `*Evolución:*\n${text}`;
+        }
+    } else {
+        message = `*EVOLUCIÓN TERAPIA OCUPACIONAL*\n\n`;
+        message += `*Fecha:* ${new Date().toLocaleDateString('es-CL')}\n\n`;
+        message += `${text}`;
+    }
+    
+    const encoded = encodeURIComponent(message);
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+}
+
+// Función para compartir por Email
+function shareViaEmail(transcriptionText, patientSelect) {
+    const text = transcriptionText.value.trim();
+    
+    if (!text) {
+        alert('No hay texto para compartir');
+        return;
+    }
+    
+    let subject = 'Evolución Terapia Ocupacional';
+    let body = '';
+    
+    // Si hay paciente seleccionado, agregar info
+    if (patientSelect && patientSelect.value !== '' && window.pacientesData) {
+        const paciente = window.pacientesData[parseInt(patientSelect.value)];
+        if (paciente) {
+            subject = `Evolución T.O. - ${paciente.nombre}`;
+            body = `EVOLUCIÓN TERAPIA OCUPACIONAL\n\n`;
+            body += `Paciente: ${paciente.nombre}\n`;
+            if (paciente.prevision) body += `Previsión: ${paciente.prevision}\n`;
+            if (paciente.habitacion) body += `Habitación: ${paciente.habitacion}\n`;
+            body += `Fecha: ${new Date().toLocaleDateString('es-CL')}\n\n`;
+            body += `Evolución:\n${text}`;
+        }
+    } else {
+        body = `EVOLUCIÓN TERAPIA OCUPACIONAL\n\n`;
+        body += `Fecha: ${new Date().toLocaleDateString('es-CL')}\n\n`;
+        body += `${text}`;
+    }
+    
+    const encodedSubject = encodeURIComponent(subject);
+    const encodedBody = encodeURIComponent(body);
+    window.location.href = `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
 }

@@ -999,7 +999,57 @@ section > p {
 .dictation-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
+}
+
+.patient-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.patient-selector label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #555;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.patient-selector select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1rem;
+    background: white;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23555' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    transition: border-color 0.3s ease;
+}
+
+.patient-selector select:focus {
+    outline: none;
+    border-color: var(--azul-primario);
+}
+
+.selected-patient-info {
+    padding: 10px;
+    background: var(--azul-claro);
+    border-radius: 8px;
+}
+
+.patient-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    color: var(--azul-primario);
+    font-weight: 500;
 }
 
 .dictation-controls {
@@ -1085,16 +1135,43 @@ section > p {
 
 .dictation-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: flex-end;
+    flex-wrap: wrap;
 }
 
 .dictation-actions .btn {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 10px 16px;
-    font-size: 0.9rem;
+    gap: 5px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+}
+
+.btn-whatsapp-share {
+    background: #25D366 !important;
+    color: white !important;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-whatsapp-share:hover {
+    background: #1da851 !important;
+}
+
+.btn-gmail-share {
+    background: #EA4335 !important;
+    color: white !important;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-gmail-share:hover {
+    background: #c5372b !important;
 }
 
 /* Footer */
