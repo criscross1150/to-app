@@ -608,24 +608,36 @@ section > p {
 
 .compact-view .row-main {
     padding: 6px 8px;
+    flex-wrap: nowrap;
+    overflow: hidden;
 }
 
 .compact-view .col-room {
-    width: 38px;
-    height: 38px;
-    font-size: 0.7rem;
+    width: 36px;
+    height: 36px;
+    font-size: 0.65rem;
+    flex-shrink: 0;
 }
 
 .compact-view .col-data {
-    padding: 0 6px;
+    padding: 0 4px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .compact-view .d-name {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .compact-view .d-sub {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .compact-view .col-status {
@@ -634,9 +646,9 @@ section > p {
 
 .compact-view .inline-checks {
     display: flex;
-    gap: 3px;
+    gap: 2px;
     align-items: center;
-    margin-left: auto;
+    flex-shrink: 0;
 }
 
 .compact-view .check-group {
@@ -658,17 +670,18 @@ section > p {
 }
 
 .compact-view .mini-check {
-    width: 22px;
-    height: 22px;
-    border-radius: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
     border: 2px solid #ddd;
     background: white;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
+    font-size: 0.55rem;
     transition: all 0.2s;
+    flex-shrink: 0;
 }
 
 .compact-view .mini-check.checked {
@@ -687,19 +700,17 @@ section > p {
 }
 
 .compact-view .quick-actions {
-    display: flex;
-    gap: 4px;
-    margin-left: 6px;
+    display: none;
 }
 
 .compact-view .quick-btn {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     border: none;
-    border-radius: 4px;
+    border-radius: 3px;
     background: #f0f0f0;
     cursor: pointer;
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1185,5 +1196,38 @@ footer {
     .form-group select {
         padding: 10px;
         font-size: 0.9rem;
+    }
+    
+    /* Vista compacta móvil */
+    .compact-view .row-main {
+        padding: 5px 6px;
+    }
+    
+    .compact-view .col-room {
+        width: 32px;
+        height: 32px;
+        font-size: 0.6rem;
+    }
+    
+    .compact-view .col-data {
+        padding: 0 4px;
+    }
+    
+    .compact-view .d-name {
+        font-size: 0.7rem;
+    }
+    
+    .compact-view .d-sub {
+        font-size: 0.55rem;
+    }
+    
+    .compact-view .mini-check {
+        width: 18px;
+        height: 18px;
+        font-size: 0.5rem;
+    }
+    
+    .compact-view .inline-checks {
+        gap: 1px;
     }
 }
