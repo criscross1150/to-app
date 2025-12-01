@@ -14,7 +14,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# Usuarios simples (en producción esto iría en una base de datos)
+# Usuarios simples - Equipo TO Clínica Alemana Temuco
 USUARIOS = {
     'cristian': {'password': 'to2025', 'nombre': 'Cristián López'},
     'ingrid': {'password': 'to2025', 'nombre': 'Ingrid'},
