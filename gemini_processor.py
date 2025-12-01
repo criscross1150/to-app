@@ -79,7 +79,12 @@ def procesar_imagen_gemini(imagen_path, api_key):
         # Prompt específico para extraer datos de la planilla
         prompt = """Analiza esta imagen de una planilla de Excel con datos de pacientes hospitalizados.
 
-Extrae TODOS los pacientes que veas en la tabla. Para cada paciente necesito:
+IMPORTANTE: La planilla tiene una columna FECHA. Debes:
+1. Identificar TODAS las fechas que aparecen en la tabla
+2. Determinar cuál es la FECHA MÁS RECIENTE (la más actual)
+3. Extraer SOLO los pacientes de esa fecha más reciente
+
+Para cada paciente de la fecha más reciente necesito:
 - HABIT (habitación): número de 3 dígitos, puede tener letra (ej: 208, 148A, 305)
 - NOMBRE: primer nombre del paciente
 - APELLIDO: apellido paterno
@@ -92,6 +97,7 @@ Las columnas de la tabla son: FECHA | MODO | HABIT | INDICACION | NOMBRE | APELL
 
 Responde SOLO con un JSON válido en este formato exacto, sin texto adicional:
 {
+    "fecha_seleccionada": "30-11-2025",
     "pacientes": [
         {
             "habitacion": "208",
@@ -106,7 +112,7 @@ Responde SOLO con un JSON válido en este formato exacto, sin texto adicional:
 }
 
 Si no puedes leer algún dato, usa valores por defecto: edad=50, dg=18, indicacion=1.
-Extrae TODOS los pacientes visibles en la imagen."""
+Recuerda: SOLO pacientes de la fecha MÁS RECIENTE visible en la tabla."""
 
         # Enviar a Gemini
         response = model.generate_content([prompt, imagen])
