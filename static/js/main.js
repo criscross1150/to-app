@@ -1074,11 +1074,11 @@ function populatePatientSelector() {
     // Limpiar opciones existentes excepto la primera
     patientSelect.innerHTML = '<option value="">-- Seleccionar paciente --</option>';
     
-    // Agregar cada paciente
+    // Agregar cada paciente (habitación + nombre)
     window.pacientesData.forEach((paciente, index) => {
         const option = document.createElement('option');
         option.value = index;
-        option.textContent = `${paciente.nombre} - ${paciente.prevision || 'Sin previsión'}`;
+        option.textContent = `${paciente.habitacion} - ${paciente.nombre}`;
         patientSelect.appendChild(option);
     });
 }
