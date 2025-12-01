@@ -1,10 +1,38 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import os
+import json
 from gemini_processor import procesar_imagen_gemini
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'clave-secreta-to-app-2025')
+
+# Configurar Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+# Usuarios simples (en producción esto iría en una base de datos)
+USUARIOS = {
+    'cristian': {'password': 'to2025', 'nombre': 'Cristián López'},
+    'usuario1': {'password': 'to2025', 'nombre': 'Usuario 1'},
+    'usuario2': {'password': 'to2025', 'nombre': 'Usuario 2'},
+    'usuario3': {'password': 'to2025', 'nombre': 'Usuario 3'},
+    'usuario4': {'password': 'to2025', 'nombre': 'Usuario 4'}
+}
+
+class User(UserMixin):
+    def __init__(self, username):
+        self.id = username
+        self.nombre = USUARIOS.get(username, {}).get('nombre', username)
+
+@login_manager.user_loader
+def load_user(username):
+    if username in USUARIOS:
+        return User(username)
+    return None
 
 # API Key de Gemini - SOLO desde variable de entorno (seguro)
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
@@ -12,11 +40,42 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 # Crear carpeta de uploads si no existe
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        data = request.get_json() if request.is_json else request.form
+        username = data.get('username', '').lower().strip()
+        password = data.get('password', '')
+        
+        if username in USUARIOS and USUARIOS[username]['password'] == password:
+            user = User(username)
+            login_user(user, remember=True)
+            if request.is_json:
+                return jsonify({'success': True, 'nombre': user.nombre})
+            return redirect(url_for('index'))
+        
+        if request.is_json:
+            return jsonify({'success': False, 'error': 'Usuario o contraseña incorrectos'})
+        return render_template('login.html', error='Usuario o contraseña incorrectos')
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def index():
-    return render_template('index.html')
+    return render_template('index.html', usuario=current_user.nombre)
 
 @app.route('/configurar-api', methods=['POST'])
+@login_required
 def configurar_api():
     """Endpoint para configurar la API key de Gemini"""
     global GEMINI_API_KEY
@@ -28,6 +87,7 @@ def configurar_api():
     return jsonify({'success': False, 'error': 'API Key vacía'})
 
 @app.route('/procesar', methods=['POST'])
+@login_required
 def procesar():
     global GEMINI_API_KEY
     
