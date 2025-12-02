@@ -73,7 +73,8 @@ def logout():
 @app.route('/')
 @login_required
 def index():
-    return render_template('index.html', usuario=current_user.nombre)
+    is_admin = current_user.id == 'cristian'
+    return render_template('index.html', usuario=current_user.nombre, user_id=current_user.id, is_admin=is_admin)
 
 @app.route('/configurar-api', methods=['POST'])
 @login_required

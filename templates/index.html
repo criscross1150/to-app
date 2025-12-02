@@ -27,7 +27,7 @@
     <div class="container">
         <header>
             <div class="user-bar">
-                <span class="user-name"><i data-lucide="user" class="icon-sm"></i> {{ usuario }}</span>
+                <span class="user-name"><i data-lucide="user" class="icon-sm"></i> {{ usuario }}{% if is_admin %} <span class="admin-badge">Admin</span>{% endif %}</span>
                 <a href="/logout" class="btn-logout"><i data-lucide="log-out" class="icon-xs"></i> Salir</a>
             </div>
             <div class="header-content">
@@ -203,6 +203,13 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- SheetJS para exportar Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    
+    <!-- Variables de usuario -->
+    <script>
+        window.currentUserId = '{{ user_id }}';
+        window.isAdmin = {{ 'true' if is_admin else 'false' }};
+    </script>
+    
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
         // Inicializar Lucide Icons

@@ -80,6 +80,19 @@ header {
 .user-name {
     font-size: 0.85rem;
     opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.admin-badge {
+    background: #ffc107;
+    color: #333;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
 }
 
 .btn-logout {

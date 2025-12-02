@@ -40,6 +40,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     let selectedFile = null;
     let pacientesData = [];
     
+    // Obtener usuario actual
+    const currentUserId = window.currentUserId || 'default';
+    const isAdmin = window.isAdmin || false;
+    
     // Exponer pacientesData globalmente para el selector de dictado
     window.pacientesData = pacientesData;
     
@@ -51,6 +55,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 .from('pacientes')
                 .upsert({
                     id: paciente.id,
+                    user_id: currentUserId,
                     fecha: getFechaISO(),
                     habitacion: paciente.habitacion,
                     nombre: paciente.nombre,
@@ -76,11 +81,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function cargarPacientesDB() {
         try {
             const fechaHoy = getFechaISO();
-            const { data, error } = await supabase
+            let query = supabase
                 .from('pacientes')
                 .select('*')
-                .eq('fecha', fechaHoy)
-                .order('created_at', { ascending: true });
+                .eq('fecha', fechaHoy);
+            
+            // Si no es admin, filtrar por usuario
+            if (!isAdmin) {
+                query = query.eq('user_id', currentUserId);
+            }
+            
+            const { data, error } = await query.order('created_at', { ascending: true });
             
             if (error) throw error;
             
@@ -96,7 +107,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     indicaciones: p.indicaciones,
                     sesionesRealizadas: p.sesiones_realizadas || [false],
                     sesionesRCE: p.sesiones_rce || [false],
-                    horasSesion: p.horas_sesion || [null]
+                    horasSesion: p.horas_sesion || [null],
+                    userId: p.user_id
                 }));
             }
             return null;
@@ -136,13 +148,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     // ===== FALLBACK LOCALSTORAGE =====
-    const STORAGE_KEY = 'to_app_pacientes';
+    // Clave única por usuario
+    const STORAGE_KEY = `to_app_pacientes_${currentUserId}`;
     
     function guardarLocalStorage() {
         const dataToSave = {
             pacientes: pacientesData,
             fecha: getFechaActual(),
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            userId: currentUserId
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
     }
@@ -1165,9 +1179,15 @@ function initVoiceDictation() {
 // Almacenamiento de evoluciones
 let evolutionHistory = [];
 
+// Clave de localStorage por usuario
+function getEvolutionStorageKey() {
+    const userId = window.currentUserId || 'default';
+    return `to_evolution_history_${userId}`;
+}
+
 function initEvolutionHistory() {
-    // Cargar del localStorage si existe
-    const saved = localStorage.getItem('to_evolution_history');
+    // Cargar del localStorage si existe (por usuario)
+    const saved = localStorage.getItem(getEvolutionStorageKey());
     if (saved) {
         try {
             evolutionHistory = JSON.parse(saved);
@@ -1179,7 +1199,7 @@ function initEvolutionHistory() {
 }
 
 function saveEvolutionHistory() {
-    localStorage.setItem('to_evolution_history', JSON.stringify(evolutionHistory));
+    localStorage.setItem(getEvolutionStorageKey(), JSON.stringify(evolutionHistory));
 }
 
 function saveCurrentEvolution() {
