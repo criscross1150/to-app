@@ -139,7 +139,7 @@
                     <div class="patient-selector">
                         <label for="patientSelect"><i data-lucide="user" class="icon-xs"></i> Paciente:</label>
                         <select id="patientSelect">
-                            <option value="" disabled selected>-- Seleccionar paciente --</option>
+                            <option value="">-- Seleccionar paciente --</option>
                         </select>
                     </div>
                     
@@ -158,17 +158,34 @@
                         <label for="transcriptionText">Texto transcrito:</label>
                         <textarea id="transcriptionText" placeholder="El texto transcrito aparecerá aquí..." rows="6"></textarea>
                         <div class="dictation-actions">
+                            <button class="btn btn-success" id="btnSaveEvolution" title="Guardar evolución">
+                                <i data-lucide="save" class="icon-xs"></i> Guardar
+                            </button>
                             <button class="btn btn-secondary" id="btnClearText" title="Limpiar texto">
                                 <i data-lucide="eraser" class="icon-xs"></i> Limpiar
                             </button>
                             <button class="btn btn-secondary" id="btnCopyText" title="Copiar al portapapeles">
                                 <i data-lucide="copy" class="icon-xs"></i> Copiar
                             </button>
-                            <button class="btn btn-whatsapp-share" id="btnShareWhatsApp" title="Enviar por WhatsApp">
-                                <i data-lucide="message-circle" class="icon-xs"></i> WhatsApp
+                        </div>
+                    </div>
+                    
+                    <!-- Historial de evoluciones guardadas -->
+                    <div class="evolution-history" id="evolutionHistory" style="display: none;">
+                        <div class="history-header">
+                            <h3><i data-lucide="clipboard-list" class="icon-sm"></i> Evoluciones Registradas</h3>
+                            <span class="history-count" id="historyCount">0</span>
+                        </div>
+                        <div class="history-list" id="historyList"></div>
+                        <div class="history-actions">
+                            <button class="btn btn-whatsapp-share" id="btnShareAllWhatsApp" title="Enviar todas por WhatsApp">
+                                <i data-lucide="message-circle" class="icon-xs"></i> Enviar por WhatsApp
                             </button>
-                            <button class="btn btn-gmail-share" id="btnShareGmail" title="Enviar por Gmail">
-                                <i data-lucide="mail" class="icon-xs"></i> Gmail
+                            <button class="btn btn-gmail-share" id="btnShareAllGmail" title="Enviar todas por Gmail">
+                                <i data-lucide="mail" class="icon-xs"></i> Enviar por Gmail
+                            </button>
+                            <button class="btn btn-danger" id="btnClearHistory" title="Limpiar historial">
+                                <i data-lucide="trash-2" class="icon-xs"></i> Limpiar Todo
                             </button>
                         </div>
                     </div>

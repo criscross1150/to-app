@@ -1005,14 +1005,40 @@ function initVoiceDictation() {
             }
             
             let errorMsg = 'Error de grabación';
+            let askRetry = false;
+            
             if (event.error === 'not-allowed') {
                 errorMsg = 'Permiso de micrófono denegado';
                 shouldRestart = false;
             } else if (event.error === 'network') {
                 errorMsg = 'Error de red';
+                askRetry = true;
+            } else if (event.error === 'audio-capture') {
+                errorMsg = 'No se detectó micrófono';
+                askRetry = true;
+            } else {
+                askRetry = true;
             }
             
-            if (!shouldRestart) {
+            shouldRestart = false;
+            isRecording = false;
+            btnRecord.classList.remove('recording');
+            btnRecord.innerHTML = '<i data-lucide="mic" class="icon-record"></i>';
+            recordStatus.classList.remove('active');
+            if (window.lucide) lucide.createIcons();
+            
+            if (askRetry) {
+                recordStatus.textContent = errorMsg;
+                setTimeout(() => {
+                    if (confirm(`${errorMsg}. ¿Deseas intentar grabar de nuevo?`)) {
+                        accumulatedText = transcriptionText.value ? transcriptionText.value.trim() + ' ' : '';
+                        shouldRestart = true;
+                        startRecognition();
+                    } else {
+                        recordStatus.textContent = 'Presiona para grabar';
+                    }
+                }, 100);
+            } else {
                 recordStatus.textContent = errorMsg;
                 setTimeout(() => {
                     recordStatus.textContent = 'Presiona para grabar';
@@ -1046,6 +1072,12 @@ function initVoiceDictation() {
     
     // Botón de grabar
     btnRecord.addEventListener('click', () => {
+        const patientSelect = document.getElementById('patientSelect');
+        if (!patientSelect || patientSelect.value === '') {
+            alert('Selecciona un paciente antes de grabar');
+            return;
+        }
+        
         if (isRecording) {
             stopRecognition();
         } else {
@@ -1101,21 +1133,200 @@ function initVoiceDictation() {
         populatePatientSelector();
     }
     
-    // Botón compartir WhatsApp
-    const btnShareWhatsapp = document.getElementById('btn-share-whatsapp');
-    if (btnShareWhatsapp) {
-        btnShareWhatsapp.addEventListener('click', () => {
-            shareViaWhatsApp(transcriptionText, patientSelect);
-        });
+    // Inicializar historial de evoluciones
+    initEvolutionHistory();
+    
+    // Botón guardar evolución
+    const btnSaveEvolution = document.getElementById('btnSaveEvolution');
+    if (btnSaveEvolution) {
+        btnSaveEvolution.addEventListener('click', saveCurrentEvolution);
     }
     
-    // Botón compartir Email
-    const btnShareEmail = document.getElementById('btn-share-email');
-    if (btnShareEmail) {
-        btnShareEmail.addEventListener('click', () => {
-            shareViaEmail(transcriptionText, patientSelect);
-        });
+    // Botones de compartir todas las evoluciones
+    const btnShareAllWhatsApp = document.getElementById('btnShareAllWhatsApp');
+    if (btnShareAllWhatsApp) {
+        btnShareAllWhatsApp.addEventListener('click', shareAllViaWhatsApp);
     }
+    
+    const btnShareAllGmail = document.getElementById('btnShareAllGmail');
+    if (btnShareAllGmail) {
+        btnShareAllGmail.addEventListener('click', shareAllViaEmail);
+    }
+    
+    // Botón limpiar historial
+    const btnClearHistory = document.getElementById('btnClearHistory');
+    if (btnClearHistory) {
+        btnClearHistory.addEventListener('click', clearEvolutionHistory);
+    }
+}
+
+// ===== HISTORIAL DE EVOLUCIONES =====
+
+// Almacenamiento de evoluciones
+let evolutionHistory = [];
+
+function initEvolutionHistory() {
+    // Cargar del localStorage si existe
+    const saved = localStorage.getItem('to_evolution_history');
+    if (saved) {
+        try {
+            evolutionHistory = JSON.parse(saved);
+            renderEvolutionHistory();
+        } catch (e) {
+            evolutionHistory = [];
+        }
+    }
+}
+
+function saveEvolutionHistory() {
+    localStorage.setItem('to_evolution_history', JSON.stringify(evolutionHistory));
+}
+
+function saveCurrentEvolution() {
+    const patientSelect = document.getElementById('patientSelect');
+    const transcriptionText = document.getElementById('transcriptionText');
+    
+    if (!patientSelect || patientSelect.value === '') {
+        alert('Selecciona un paciente');
+        return;
+    }
+    
+    const text = transcriptionText.value.trim();
+    if (!text) {
+        alert('No hay texto para guardar');
+        return;
+    }
+    
+    const paciente = window.pacientesData[parseInt(patientSelect.value)];
+    if (!paciente) {
+        alert('Error: paciente no encontrado');
+        return;
+    }
+    
+    // Crear registro de evolución
+    const evolution = {
+        id: Date.now(),
+        habitacion: paciente.habitacion,
+        nombre: paciente.nombre,
+        texto: text,
+        fecha: new Date().toLocaleDateString('es-CL'),
+        hora: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    evolutionHistory.push(evolution);
+    saveEvolutionHistory();
+    renderEvolutionHistory();
+    
+    // Limpiar el textarea y resetear selector
+    transcriptionText.value = '';
+    patientSelect.value = '';
+    
+    // Feedback visual
+    const btnSave = document.getElementById('btnSaveEvolution');
+    const originalText = btnSave.innerHTML;
+    btnSave.innerHTML = '<i data-lucide="check" class="icon-xs"></i> ¡Guardado!';
+    if (window.lucide) lucide.createIcons();
+    
+    setTimeout(() => {
+        btnSave.innerHTML = originalText;
+        if (window.lucide) lucide.createIcons();
+    }, 2000);
+}
+
+function renderEvolutionHistory() {
+    const historySection = document.getElementById('evolutionHistory');
+    const historyList = document.getElementById('historyList');
+    const historyCount = document.getElementById('historyCount');
+    
+    if (!historySection || !historyList) return;
+    
+    if (evolutionHistory.length === 0) {
+        historySection.style.display = 'none';
+        return;
+    }
+    
+    historySection.style.display = 'block';
+    historyCount.textContent = evolutionHistory.length;
+    
+    historyList.innerHTML = evolutionHistory.map(evo => `
+        <div class="history-item" data-id="${evo.id}">
+            <div class="history-item-header">
+                <span class="history-patient">${evo.habitacion} - ${evo.nombre}</span>
+                <span class="history-time">${evo.fecha} ${evo.hora}</span>
+            </div>
+            <div class="history-text">${evo.texto}</div>
+            <div class="history-item-actions">
+                <button class="btn-delete-item" onclick="deleteEvolution(${evo.id})">
+                    <i data-lucide="trash-2" class="icon-xs"></i> Eliminar
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    if (window.lucide) lucide.createIcons();
+}
+
+function deleteEvolution(id) {
+    if (confirm('¿Eliminar esta evolución?')) {
+        evolutionHistory = evolutionHistory.filter(e => e.id !== id);
+        saveEvolutionHistory();
+        renderEvolutionHistory();
+    }
+}
+
+function clearEvolutionHistory() {
+    if (confirm('¿Eliminar TODAS las evoluciones registradas?')) {
+        evolutionHistory = [];
+        saveEvolutionHistory();
+        renderEvolutionHistory();
+    }
+}
+
+function shareAllViaWhatsApp() {
+    if (evolutionHistory.length === 0) {
+        alert('No hay evoluciones para compartir');
+        return;
+    }
+    
+    let message = `*EVOLUCIONES TERAPIA OCUPACIONAL*\n`;
+    message += `*Fecha:* ${new Date().toLocaleDateString('es-CL')}\n`;
+    message += `*Total:* ${evolutionHistory.length} evoluciones\n\n`;
+    message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+    
+    evolutionHistory.forEach((evo, index) => {
+        message += `*${index + 1}. ${evo.habitacion} - ${evo.nombre}*\n`;
+        message += `${evo.texto}\n\n`;
+    });
+    
+    const encoded = encodeURIComponent(message);
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+}
+
+function shareAllViaEmail() {
+    if (evolutionHistory.length === 0) {
+        alert('No hay evoluciones para compartir');
+        return;
+    }
+    
+    const fecha = new Date().toLocaleDateString('es-CL');
+    const subject = `Evoluciones T.O. - ${fecha} (${evolutionHistory.length} pacientes)`;
+    
+    let body = `EVOLUCIONES TERAPIA OCUPACIONAL\n`;
+    body += `Fecha: ${fecha}\n`;
+    body += `Total: ${evolutionHistory.length} evoluciones\n\n`;
+    body += `════════════════════════════════\n\n`;
+    
+    evolutionHistory.forEach((evo, index) => {
+        body += `${index + 1}. HABITACIÓN ${evo.habitacion} - ${evo.nombre}\n`;
+        body += `   Hora: ${evo.hora}\n`;
+        body += `   Evolución:\n`;
+        body += `   ${evo.texto}\n\n`;
+        body += `────────────────────────────────\n\n`;
+    });
+    
+    const encodedSubject = encodeURIComponent(subject);
+    const encodedBody = encodeURIComponent(body);
+    window.location.href = `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
 }
 
 // Función para poblar el selector de pacientes
@@ -1133,71 +1344,4 @@ function populatePatientSelector() {
         option.textContent = `${paciente.habitacion} - ${paciente.nombre}`;
         patientSelect.appendChild(option);
     });
-}
-
-// Función para compartir por WhatsApp
-function shareViaWhatsApp(transcriptionText, patientSelect) {
-    const text = transcriptionText.value.trim();
-    
-    if (!text) {
-        alert('No hay texto para compartir');
-        return;
-    }
-    
-    let message = '';
-    
-    // Si hay paciente seleccionado, agregar info
-    if (patientSelect && patientSelect.value !== '' && window.pacientesData) {
-        const paciente = window.pacientesData[parseInt(patientSelect.value)];
-        if (paciente) {
-            message = `*EVOLUCIÓN TERAPIA OCUPACIONAL*\n\n`;
-            message += `*Paciente:* ${paciente.nombre}\n`;
-            if (paciente.prevision) message += `*Previsión:* ${paciente.prevision}\n`;
-            if (paciente.habitacion) message += `*Habitación:* ${paciente.habitacion}\n`;
-            message += `*Fecha:* ${new Date().toLocaleDateString('es-CL')}\n\n`;
-            message += `*Evolución:*\n${text}`;
-        }
-    } else {
-        message = `*EVOLUCIÓN TERAPIA OCUPACIONAL*\n\n`;
-        message += `*Fecha:* ${new Date().toLocaleDateString('es-CL')}\n\n`;
-        message += `${text}`;
-    }
-    
-    const encoded = encodeURIComponent(message);
-    window.open(`https://wa.me/?text=${encoded}`, '_blank');
-}
-
-// Función para compartir por Email
-function shareViaEmail(transcriptionText, patientSelect) {
-    const text = transcriptionText.value.trim();
-    
-    if (!text) {
-        alert('No hay texto para compartir');
-        return;
-    }
-    
-    let subject = 'Evolución Terapia Ocupacional';
-    let body = '';
-    
-    // Si hay paciente seleccionado, agregar info
-    if (patientSelect && patientSelect.value !== '' && window.pacientesData) {
-        const paciente = window.pacientesData[parseInt(patientSelect.value)];
-        if (paciente) {
-            subject = `Evolución T.O. - ${paciente.nombre}`;
-            body = `EVOLUCIÓN TERAPIA OCUPACIONAL\n\n`;
-            body += `Paciente: ${paciente.nombre}\n`;
-            if (paciente.prevision) body += `Previsión: ${paciente.prevision}\n`;
-            if (paciente.habitacion) body += `Habitación: ${paciente.habitacion}\n`;
-            body += `Fecha: ${new Date().toLocaleDateString('es-CL')}\n\n`;
-            body += `Evolución:\n${text}`;
-        }
-    } else {
-        body = `EVOLUCIÓN TERAPIA OCUPACIONAL\n\n`;
-        body += `Fecha: ${new Date().toLocaleDateString('es-CL')}\n\n`;
-        body += `${text}`;
-    }
-    
-    const encodedSubject = encodeURIComponent(subject);
-    const encodedBody = encodeURIComponent(body);
-    window.location.href = `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
 }
