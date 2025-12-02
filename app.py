@@ -16,7 +16,7 @@ login_manager.login_view = 'login'
 
 # Usuarios simples - Equipo TO Clínica Alemana Temuco
 USUARIOS = {
-    'cristian': {'password': 'to2025', 'nombre': 'Cristián López'},
+    'cristian': {'password': 'Luthien1', 'nombre': 'Cristián López'},
     'ingrid': {'password': 'to2025', 'nombre': 'Ingrid'},
     'carla': {'password': 'to2025', 'nombre': 'Carla'},
     'tatiana': {'password': 'to2025', 'nombre': 'Tatiana'},
