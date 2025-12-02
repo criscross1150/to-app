@@ -921,103 +921,145 @@ function initVoiceDictation() {
         return;
     }
     
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'es-CL'; // Español de Chile
-    recognition.continuous = true; // Grabación continua
-    recognition.interimResults = true; // Resultados parciales
-    recognition.maxAlternatives = 1; // Solo la mejor alternativa
-    
+    let recognition = null;
     let isRecording = false;
-    let finalTranscript = '';
-    let lastResultIndex = 0;
+    let shouldRestart = false;
+    let accumulatedText = '';
     
-    // Evento de resultado
-    recognition.onresult = (event) => {
-        let interimTranscript = '';
+    function createRecognition() {
+        const rec = new SpeechRecognition();
+        rec.lang = 'es-CL';
+        rec.continuous = false; // Sesiones cortas para mayor precisión
+        rec.interimResults = true;
+        rec.maxAlternatives = 1;
+        return rec;
+    }
+    
+    function startRecognition() {
+        recognition = createRecognition();
         
-        // Procesar solo resultados nuevos desde el último índice procesado
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-            const result = event.results[i];
-            const transcript = result[0].transcript;
+        recognition.onresult = (event) => {
+            let finalText = '';
+            let interimText = '';
             
-            if (result.isFinal) {
-                // Solo agregar si es un resultado final nuevo
-                finalTranscript += transcript.trim() + ' ';
-                lastResultIndex = i + 1;
+            for (let i = 0; i < event.results.length; i++) {
+                const result = event.results[i];
+                if (result.isFinal) {
+                    finalText += result[0].transcript;
+                } else {
+                    interimText += result[0].transcript;
+                }
+            }
+            
+            // Si hay texto final, agregarlo al acumulado
+            if (finalText) {
+                accumulatedText += finalText.trim() + ' ';
+            }
+            
+            // Mostrar texto acumulado + texto interim actual
+            transcriptionText.value = (accumulatedText + interimText).trim();
+            transcriptionText.scrollTop = transcriptionText.scrollHeight;
+        };
+        
+        recognition.onstart = () => {
+            isRecording = true;
+            btnRecord.classList.add('recording');
+            btnRecord.innerHTML = '<i data-lucide="mic-off" class="icon-record"></i>';
+            recordStatus.textContent = 'Escuchando...';
+            recordStatus.classList.add('active');
+            if (window.lucide) lucide.createIcons();
+        };
+        
+        recognition.onend = () => {
+            // Si debe continuar, reiniciar automáticamente
+            if (shouldRestart && isRecording) {
+                setTimeout(() => {
+                    if (shouldRestart) {
+                        try {
+                            startRecognition();
+                        } catch (e) {
+                            console.log('Reinicio cancelado');
+                        }
+                    }
+                }, 100);
             } else {
-                // Resultados intermedios (en proceso)
-                interimTranscript = transcript;
+                isRecording = false;
+                btnRecord.classList.remove('recording');
+                btnRecord.innerHTML = '<i data-lucide="mic" class="icon-record"></i>';
+                recordStatus.textContent = 'Presiona para grabar';
+                recordStatus.classList.remove('active');
+                if (window.lucide) lucide.createIcons();
+            }
+        };
+        
+        recognition.onerror = (event) => {
+            console.error('Error:', event.error);
+            
+            // Si es error de no-speech, reiniciar silenciosamente
+            if (event.error === 'no-speech' && shouldRestart) {
+                return; // Se reiniciará en onend
+            }
+            
+            if (event.error === 'aborted' && shouldRestart) {
+                return;
+            }
+            
+            let errorMsg = 'Error de grabación';
+            if (event.error === 'not-allowed') {
+                errorMsg = 'Permiso de micrófono denegado';
+                shouldRestart = false;
+            } else if (event.error === 'network') {
+                errorMsg = 'Error de red';
+            }
+            
+            if (!shouldRestart) {
+                recordStatus.textContent = errorMsg;
+                setTimeout(() => {
+                    recordStatus.textContent = 'Presiona para grabar';
+                }, 3000);
+            }
+        };
+        
+        try {
+            recognition.start();
+        } catch (e) {
+            console.error('Error iniciando reconocimiento:', e);
+        }
+    }
+    
+    function stopRecognition() {
+        shouldRestart = false;
+        isRecording = false;
+        if (recognition) {
+            try {
+                recognition.stop();
+            } catch (e) {
+                console.log('Ya detenido');
             }
         }
-        
-        // Mostrar texto final + lo que se está procesando
-        const displayText = finalTranscript + (interimTranscript ? interimTranscript : '');
-        transcriptionText.value = displayText.trim();
-        
-        // Auto-scroll al final
-        transcriptionText.scrollTop = transcriptionText.scrollHeight;
-    };
-    
-    // Evento de inicio
-    recognition.onstart = () => {
-        isRecording = true;
-        btnRecord.classList.add('recording');
-        btnRecord.innerHTML = '<i data-lucide="mic-off" class="icon-record"></i>';
-        recordStatus.textContent = 'Grabando... (toca para detener)';
-        recordStatus.classList.add('active');
-        
-        // Reinicializar iconos de Lucide
-        if (window.lucide) lucide.createIcons();
-    };
-    
-    // Evento de fin
-    recognition.onend = () => {
-        isRecording = false;
         btnRecord.classList.remove('recording');
         btnRecord.innerHTML = '<i data-lucide="mic" class="icon-record"></i>';
         recordStatus.textContent = 'Presiona para grabar';
         recordStatus.classList.remove('active');
-        
-        // Reinicializar iconos de Lucide
         if (window.lucide) lucide.createIcons();
-    };
-    
-    // Evento de error
-    recognition.onerror = (event) => {
-        console.error('Error de reconocimiento:', event.error);
-        
-        let errorMsg = 'Error de grabación';
-        if (event.error === 'no-speech') {
-            errorMsg = 'No se detectó voz. Intenta de nuevo.';
-        } else if (event.error === 'not-allowed') {
-            errorMsg = 'Permiso de micrófono denegado';
-        } else if (event.error === 'network') {
-            errorMsg = 'Error de red. Verifica tu conexión.';
-        }
-        
-        recordStatus.textContent = errorMsg;
-        setTimeout(() => {
-            recordStatus.textContent = 'Presiona para grabar';
-        }, 3000);
-    };
+    }
     
     // Botón de grabar
     btnRecord.addEventListener('click', () => {
         if (isRecording) {
-            recognition.stop();
+            stopRecognition();
         } else {
-            // Mantener el texto existente si hay
-            finalTranscript = transcriptionText.value ? transcriptionText.value.trim() + ' ' : '';
-            lastResultIndex = 0; // Reiniciar índice de resultados
-            recognition.start();
+            // Preservar texto existente
+            accumulatedText = transcriptionText.value ? transcriptionText.value.trim() + ' ' : '';
+            shouldRestart = true;
+            startRecognition();
         }
     });
     
     // Botón de limpiar
     btnClearText.addEventListener('click', () => {
         transcriptionText.value = '';
-        finalTranscript = '';
-        lastResultIndex = 0;
+        accumulatedText = '';
     });
     
     // Botón de copiar
