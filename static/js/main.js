@@ -1254,8 +1254,11 @@ function renderEvolutionHistory() {
                 <span class="history-patient">${evo.habitacion} - ${evo.nombre}</span>
                 <span class="history-time">${evo.fecha} ${evo.hora}</span>
             </div>
-            <div class="history-text">${evo.texto}</div>
+            <div class="history-text" id="text-${evo.id}">${evo.texto}</div>
             <div class="history-item-actions">
+                <button class="btn-edit-item" onclick="editEvolution(${evo.id})">
+                    <i data-lucide="pencil" class="icon-xs"></i> Editar
+                </button>
                 <button class="btn-delete-item" onclick="deleteEvolution(${evo.id})">
                     <i data-lucide="trash-2" class="icon-xs"></i> Eliminar
                 </button>
@@ -1264,6 +1267,64 @@ function renderEvolutionHistory() {
     `).join('');
     
     if (window.lucide) lucide.createIcons();
+}
+
+function editEvolution(id) {
+    const evolution = evolutionHistory.find(e => e.id === id);
+    if (!evolution) return;
+    
+    const textElement = document.getElementById(`text-${id}`);
+    const currentText = evolution.texto;
+    
+    // Crear textarea para edición
+    const editContainer = document.createElement('div');
+    editContainer.className = 'edit-container';
+    editContainer.innerHTML = `
+        <textarea class="edit-textarea" id="edit-${id}" rows="4">${currentText}</textarea>
+        <div class="edit-actions">
+            <button class="btn-save-edit" onclick="saveEditEvolution(${id})">
+                <i data-lucide="check" class="icon-xs"></i> Guardar
+            </button>
+            <button class="btn-cancel-edit" onclick="cancelEditEvolution(${id}, '${encodeURIComponent(currentText)}')">
+                <i data-lucide="x" class="icon-xs"></i> Cancelar
+            </button>
+        </div>
+    `;
+    
+    textElement.innerHTML = '';
+    textElement.appendChild(editContainer);
+    
+    // Ocultar botones de acción
+    const actionsDiv = textElement.parentElement.querySelector('.history-item-actions');
+    if (actionsDiv) actionsDiv.style.display = 'none';
+    
+    if (window.lucide) lucide.createIcons();
+    
+    // Focus en el textarea
+    document.getElementById(`edit-${id}`).focus();
+}
+
+function saveEditEvolution(id) {
+    const textarea = document.getElementById(`edit-${id}`);
+    if (!textarea) return;
+    
+    const newText = textarea.value.trim();
+    if (!newText) {
+        alert('El texto no puede estar vacío');
+        return;
+    }
+    
+    const evolution = evolutionHistory.find(e => e.id === id);
+    if (evolution) {
+        evolution.texto = newText;
+        evolution.editado = true;
+        saveEvolutionHistory();
+        renderEvolutionHistory();
+    }
+}
+
+function cancelEditEvolution(id, encodedText) {
+    renderEvolutionHistory();
 }
 
 function deleteEvolution(id) {
