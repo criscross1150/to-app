@@ -641,9 +641,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (confirm(`¿Está seguro que desea eliminar a ${paciente.nombre} de la lista?`)) {
             await eliminarPacienteDB(pacienteId);
             pacientesData = pacientesData.filter(p => p.id !== pacienteId);
+            window.pacientesData = pacientesData;
             const card = document.getElementById(`patient-${pacienteId}`);
             if (card) card.remove();
             actualizarEstadisticas();
+            // Actualizar selector de pacientes para dictado
+            if (typeof populatePatientSelector === 'function') {
+                populatePatientSelector();
+            }
         }
     };
     
@@ -789,6 +794,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         
         actualizarEstadisticas();
+        // Actualizar referencia global y selector de pacientes para dictado
+        window.pacientesData = pacientesData;
+        if (typeof populatePatientSelector === 'function') {
+            populatePatientSelector();
+        }
         window.cerrarModal();
     };
     
