@@ -930,8 +930,9 @@ function initVoiceDictation() {
     const btnRecord = document.getElementById('btnRecord');
     const recordStatus = document.getElementById('recordStatus');
     const transcriptionText = document.getElementById('transcriptionText');
-    const btnClearText = document.getElementById('btnClearText');
-    const btnCopyText = document.getElementById('btnCopyText');
+    const btnClearEvolution = document.getElementById('btnClearEvolution');
+    const btnPreviewEvolution = document.getElementById('btnPreviewEvolution');
+    const btnCopyPreview = document.getElementById('btnCopyPreview');
     
     if (!btnRecord) return; // Si no existe la sección de dictado, salir
     
@@ -942,7 +943,7 @@ function initVoiceDictation() {
         recordStatus.textContent = 'Tu navegador no soporta dictado por voz';
         btnRecord.disabled = true;
         btnRecord.style.opacity = '0.5';
-        return;
+        // Continuar para inicializar otros botones
     }
     
     let recognition = null;
@@ -951,6 +952,7 @@ function initVoiceDictation() {
     let accumulatedText = '';
     
     function createRecognition() {
+        if (!SpeechRecognition) return null;
         const rec = new SpeechRecognition();
         rec.lang = 'es-CL';
         rec.continuous = false; // Sesiones cortas para mayor precisión
@@ -988,7 +990,7 @@ function initVoiceDictation() {
         recognition.onstart = () => {
             isRecording = true;
             btnRecord.classList.add('recording');
-            btnRecord.innerHTML = '<i data-lucide="mic-off" class="icon-record"></i>';
+            btnRecord.innerHTML = '<i data-lucide="mic-off" class="icon-xs"></i>';
             recordStatus.textContent = 'Escuchando...';
             recordStatus.classList.add('active');
             if (window.lucide) lucide.createIcons();
@@ -1009,8 +1011,8 @@ function initVoiceDictation() {
             } else {
                 isRecording = false;
                 btnRecord.classList.remove('recording');
-                btnRecord.innerHTML = '<i data-lucide="mic" class="icon-record"></i>';
-                recordStatus.textContent = 'Presiona para grabar';
+                btnRecord.innerHTML = '<i data-lucide="mic" class="icon-xs"></i>';
+                recordStatus.textContent = 'Toca el micrófono para dictar';
                 recordStatus.classList.remove('active');
                 if (window.lucide) lucide.createIcons();
             }
@@ -1047,7 +1049,7 @@ function initVoiceDictation() {
             shouldRestart = false;
             isRecording = false;
             btnRecord.classList.remove('recording');
-            btnRecord.innerHTML = '<i data-lucide="mic" class="icon-record"></i>';
+            btnRecord.innerHTML = '<i data-lucide="mic" class="icon-xs"></i>';
             recordStatus.classList.remove('active');
             if (window.lucide) lucide.createIcons();
             
@@ -1088,8 +1090,8 @@ function initVoiceDictation() {
             }
         }
         btnRecord.classList.remove('recording');
-        btnRecord.innerHTML = '<i data-lucide="mic" class="icon-record"></i>';
-        recordStatus.textContent = 'Presiona para grabar';
+        btnRecord.innerHTML = '<i data-lucide="mic" class="icon-xs"></i>';
+        recordStatus.textContent = 'Toca el micrófono para dictar';
         recordStatus.classList.remove('active');
         if (window.lucide) lucide.createIcons();
     }
@@ -1112,44 +1114,20 @@ function initVoiceDictation() {
         }
     });
     
-    // Botón de limpiar
-    btnClearText.addEventListener('click', () => {
-        transcriptionText.value = '';
-        accumulatedText = '';
-    });
+    // Botón de limpiar formulario completo
+    if (btnClearEvolution) {
+        btnClearEvolution.addEventListener('click', clearEvolutionForm);
+    }
     
-    // Botón de copiar
-    btnCopyText.addEventListener('click', async () => {
-        const text = transcriptionText.value.trim();
-        
-        if (!text) {
-            alert('No hay texto para copiar');
-            return;
-        }
-        
-        try {
-            await navigator.clipboard.writeText(text);
-            
-            // Feedback visual
-            const originalText = btnCopyText.innerHTML;
-            btnCopyText.innerHTML = '<i data-lucide="check" class="icon-xs"></i> ¡Copiado!';
-            btnCopyText.style.background = 'var(--verde-primario)';
-            
-            if (window.lucide) lucide.createIcons();
-            
-            setTimeout(() => {
-                btnCopyText.innerHTML = originalText;
-                btnCopyText.style.background = '';
-                if (window.lucide) lucide.createIcons();
-            }, 2000);
-            
-        } catch (err) {
-            // Fallback para navegadores más antiguos
-            transcriptionText.select();
-            document.execCommand('copy');
-            alert('Texto copiado al portapapeles');
-        }
-    });
+    // Botón de vista previa
+    if (btnPreviewEvolution) {
+        btnPreviewEvolution.addEventListener('click', showEvolutionPreview);
+    }
+    
+    // Botón copiar vista previa
+    if (btnCopyPreview) {
+        btnCopyPreview.addEventListener('click', copyEvolutionPreview);
+    }
     
     // Poblar selector de pacientes
     const patientSelect = document.getElementById('patientSelect');
@@ -1212,18 +1190,82 @@ function saveEvolutionHistory() {
     localStorage.setItem(getEvolutionStorageKey(), JSON.stringify(evolutionHistory));
 }
 
-function saveCurrentEvolution() {
+// ===== FUNCIONES DE FORMULARIO ESTRUCTURADO =====
+
+// Obtener datos del formulario estructurado
+function getEvolutionFormData() {
+    return {
+        conciencia: document.querySelector('input[name="conciencia"]:checked')?.value || '',
+        colaboracion: document.querySelector('input[name="colaboracion"]:checked')?.value || '',
+        orientacion: document.querySelector('input[name="orientacion"]:checked')?.value || '',
+        animo: document.querySelector('input[name="animo"]:checked')?.value || '',
+        movilidad: document.querySelector('input[name="movilidad"]:checked')?.value || '',
+        intervenciones: Array.from(document.querySelectorAll('input[name="intervencion"]:checked')).map(cb => cb.value),
+        observaciones: document.getElementById('transcriptionText')?.value?.trim() || ''
+    };
+}
+
+// Generar texto formateado de la evolución
+function formatEvolutionText(data, paciente) {
+    let texto = `EVOLUCIÓN T.O.\n`;
+    texto += `Paciente: ${paciente.habitacion} - ${paciente.nombre}\n\n`;
+    
+    // Características Generales
+    const caracteristicas = [];
+    if (data.conciencia) caracteristicas.push(data.conciencia);
+    if (data.colaboracion) caracteristicas.push(data.colaboracion);
+    if (data.orientacion) caracteristicas.push(data.orientacion);
+    if (data.animo) caracteristicas.push(`Ánimo ${data.animo.toLowerCase()}`);
+    if (data.movilidad) caracteristicas.push(data.movilidad);
+    
+    if (caracteristicas.length > 0) {
+        texto += `Estado: ${caracteristicas.join(', ')}.\n\n`;
+    }
+    
+    // Intervenciones realizadas
+    if (data.intervenciones.length > 0) {
+        texto += `Intervención: ${data.intervenciones.join(', ')}.\n\n`;
+    }
+    
+    // Observaciones
+    if (data.observaciones) {
+        texto += `Observaciones: ${data.observaciones}`;
+    }
+    
+    return texto.trim();
+}
+
+// Limpiar formulario completo
+function clearEvolutionForm() {
+    // Limpiar radios
+    document.querySelectorAll('input[name="conciencia"]').forEach(r => r.checked = false);
+    document.querySelectorAll('input[name="colaboracion"]').forEach(r => r.checked = false);
+    document.querySelectorAll('input[name="orientacion"]').forEach(r => r.checked = false);
+    document.querySelectorAll('input[name="animo"]').forEach(r => r.checked = false);
+    document.querySelectorAll('input[name="movilidad"]').forEach(r => r.checked = false);
+    
+    // Limpiar checkboxes
+    document.querySelectorAll('input[name="intervencion"]').forEach(cb => cb.checked = false);
+    
+    // Limpiar textarea
+    const transcription = document.getElementById('transcriptionText');
+    if (transcription) transcription.value = '';
+    
+    // Limpiar selector de paciente
     const patientSelect = document.getElementById('patientSelect');
-    const transcriptionText = document.getElementById('transcriptionText');
+    if (patientSelect) patientSelect.value = '';
+    
+    // Ocultar vista previa
+    const preview = document.getElementById('evolutionPreview');
+    if (preview) preview.style.display = 'none';
+}
+
+// Mostrar vista previa
+function showEvolutionPreview() {
+    const patientSelect = document.getElementById('patientSelect');
     
     if (!patientSelect || patientSelect.value === '') {
         alert('Selecciona un paciente');
-        return;
-    }
-    
-    const text = transcriptionText.value.trim();
-    if (!text) {
-        alert('No hay texto para guardar');
         return;
     }
     
@@ -1233,12 +1275,95 @@ function saveCurrentEvolution() {
         return;
     }
     
+    const formData = getEvolutionFormData();
+    const texto = formatEvolutionText(formData, paciente);
+    
+    const previewContent = document.getElementById('previewContent');
+    const evolutionPreview = document.getElementById('evolutionPreview');
+    
+    if (previewContent && evolutionPreview) {
+        previewContent.textContent = texto;
+        evolutionPreview.style.display = 'block';
+        evolutionPreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+// Copiar vista previa
+async function copyEvolutionPreview() {
+    const previewContent = document.getElementById('previewContent');
+    const btnCopyPreview = document.getElementById('btnCopyPreview');
+    
+    if (!previewContent || !previewContent.textContent.trim()) {
+        alert('No hay texto para copiar');
+        return;
+    }
+    
+    try {
+        await navigator.clipboard.writeText(previewContent.textContent);
+        
+        // Feedback visual
+        const originalText = btnCopyPreview.innerHTML;
+        btnCopyPreview.innerHTML = '<i data-lucide="check" class="icon-xs"></i> ¡Copiado!';
+        btnCopyPreview.style.background = 'var(--verde-primario)';
+        
+        if (window.lucide) lucide.createIcons();
+        
+        setTimeout(() => {
+            btnCopyPreview.innerHTML = originalText;
+            btnCopyPreview.style.background = '';
+            if (window.lucide) lucide.createIcons();
+        }, 2000);
+        
+    } catch (err) {
+        const textarea = document.createElement('textarea');
+        textarea.value = previewContent.textContent;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        alert('Texto copiado al portapapeles');
+    }
+}
+
+function saveCurrentEvolution() {
+    const patientSelect = document.getElementById('patientSelect');
+    
+    if (!patientSelect || patientSelect.value === '') {
+        alert('Selecciona un paciente');
+        return;
+    }
+    
+    const paciente = window.pacientesData[parseInt(patientSelect.value)];
+    if (!paciente) {
+        alert('Error: paciente no encontrado');
+        return;
+    }
+    
+    // Obtener datos estructurados
+    const formData = getEvolutionFormData();
+    
+    // Verificar que hay al menos algo seleccionado
+    const hayDatos = formData.conciencia || formData.colaboracion || formData.orientacion || 
+                     formData.animo || formData.movilidad || 
+                     formData.intervenciones.length > 0 || formData.observaciones;
+    
+    if (!hayDatos) {
+        alert('Completa al menos un campo antes de guardar');
+        return;
+    }
+    
+    // Generar texto formateado
+    const textoFormateado = formatEvolutionText(formData, paciente);
+    
     // Crear registro de evolución
     const evolution = {
         id: Date.now(),
         habitacion: paciente.habitacion,
         nombre: paciente.nombre,
-        texto: text,
+        // Guardar datos estructurados para poder editar después
+        formData: formData,
+        // Guardar texto formateado para mostrar
+        texto: textoFormateado,
         fecha: new Date().toLocaleDateString('es-CL'),
         hora: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
     };
@@ -1247,9 +1372,8 @@ function saveCurrentEvolution() {
     saveEvolutionHistory();
     renderEvolutionHistory();
     
-    // Limpiar el textarea y resetear selector
-    transcriptionText.value = '';
-    patientSelect.value = '';
+    // Limpiar el formulario
+    clearEvolutionForm();
     
     // Feedback visual
     const btnSave = document.getElementById('btnSaveEvolution');
@@ -1278,12 +1402,22 @@ function renderEvolutionHistory() {
     historySection.style.display = 'block';
     historyCount.textContent = evolutionHistory.length;
     
-    historyList.innerHTML = evolutionHistory.map(evo => `
+    historyList.innerHTML = evolutionHistory.map(evo => {
+        // Mostrar resumen compacto de las intervenciones si existen
+        let resumen = '';
+        if (evo.formData && evo.formData.intervenciones && evo.formData.intervenciones.length > 0) {
+            resumen = `<div class="history-tags">${evo.formData.intervenciones.map(i => 
+                `<span class="history-tag">${i}</span>`
+            ).join('')}</div>`;
+        }
+        
+        return `
         <div class="history-item" data-id="${evo.id}">
             <div class="history-item-header">
                 <span class="history-patient">${evo.habitacion} - ${evo.nombre}</span>
                 <span class="history-time">${evo.fecha} ${evo.hora}</span>
             </div>
+            ${resumen}
             <div class="history-text" id="text-${evo.id}">${evo.texto}</div>
             <div class="history-item-actions">
                 <button class="btn-edit-item" onclick="editEvolution(${evo.id})">
@@ -1294,7 +1428,7 @@ function renderEvolutionHistory() {
                 </button>
             </div>
         </div>
-    `).join('');
+    `}).join('');
     
     if (window.lucide) lucide.createIcons();
 }
