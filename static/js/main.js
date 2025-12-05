@@ -375,9 +375,22 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function mostrarPacientes(pacientes) {
         loading.style.display = 'none';
         
+        // Mostrar la imagen procesada
+        const processedImageContainer = document.getElementById('processedImageContainer');
+        const processedImage = document.getElementById('processedImage');
+        const imagePreview = document.getElementById('imagePreview');
+        
+        if (processedImageContainer && processedImage && imagePreview.src) {
+            processedImage.src = imagePreview.src;
+            processedImageContainer.style.display = 'block';
+            // Guardar la URL de la imagen para uso posterior
+            window.lastProcessedImageSrc = imagePreview.src;
+        }
+        
         pacientesData = pacientes.map((p) => ({
             ...p,
             id: generarUUID(),
+            reposo: p.reposo || 'no',
             sesionesRealizadas: new Array(p.indicaciones).fill(false),
             sesionesRCE: new Array(p.indicaciones).fill(false),
             horasSesion: new Array(p.indicaciones).fill(null)
@@ -501,11 +514,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         const mostrarBtnAgregar = paciente.indicaciones < 2;
         const diagCorto = paciente.diagnostico.length > 12 ? paciente.diagnostico.substring(0, 12) + '...' : paciente.diagnostico;
         
+        // Indicador de reposo
+        let reposoHTML = '';
+        if (paciente.reposo && paciente.reposo !== 'no') {
+            const reposoClass = paciente.reposo === 'absoluto' ? 'reposo-absoluto' : 'reposo-relativo';
+            const reposoLabel = paciente.reposo === 'absoluto' ? 'R.Abs' : 'R.Rel';
+            reposoHTML = `<span class="reposo-badge ${reposoClass}">${reposoLabel}</span>`;
+        }
+        
         card.innerHTML = `
             <div class="row-main" onclick="window.toggleExpand('${paciente.id}')">
                 <div class="col-room ${tipo}">${paciente.habitacion}</div>
                 <div class="col-data">
-                    <span class="d-name">${paciente.nombre}</span>
+                    <span class="d-name">${paciente.nombre} ${reposoHTML}</span>
                     <span class="d-sub">${paciente.edad}a · ${getIconoDiagnostico(paciente.diagnostico)} ${diagCorto}</span>
                 </div>
                 <div class="inline-checks" onclick="event.stopPropagation()">
@@ -681,6 +702,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             diagnostico: 'Otro',
             indicaciones: 1,
             clasificacion: 'MQ',
+            reposo: 'no',
             sesionesRealizadas: [false],
             sesionesRCE: [false],
             horasSesion: [null]
@@ -701,6 +723,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         let optionsDiag = diagnosticos.map(d => 
             `<option value="${d}" ${paciente.diagnostico === d ? 'selected' : ''}>${d}</option>`
         ).join('');
+        
+        const reposoActual = paciente.reposo || 'no';
         
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
@@ -724,6 +748,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <label>Diagnóstico</label>
                     <select id="inputDiagnostico">${optionsDiag}</select>
                 </div>
+                <div class="form-group">
+                    <label>Indicación de Reposo</label>
+                    <select id="inputReposo">
+                        <option value="no" ${reposoActual === 'no' ? 'selected' : ''}>Sin indicación</option>
+                        <option value="relativo" ${reposoActual === 'relativo' ? 'selected' : ''}>Reposo Relativo</option>
+                        <option value="absoluto" ${reposoActual === 'absoluto' ? 'selected' : ''}>Reposo Absoluto</option>
+                    </select>
+                </div>
                 <div class="modal-actions">
                     <button class="btn btn-secondary" onclick="window.cerrarModal()">Cancelar</button>
                     <button class="btn btn-primary" onclick="window.guardarPaciente('${paciente.id}', ${esNuevo})">Guardar</button>
@@ -743,6 +775,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const nombre = document.getElementById('inputNombre').value.trim().toUpperCase();
         const edad = parseInt(document.getElementById('inputEdad').value) || 0;
         const diagnostico = document.getElementById('inputDiagnostico').value;
+        const reposo = document.getElementById('inputReposo').value;
         
         if (!habitacion || !nombre || !edad) {
             alert('Complete todos los campos');
@@ -756,7 +789,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (esNuevo) {
             const nuevoPaciente = {
                 id: pacienteId,
-                habitacion, nombre, edad, diagnostico, clasificacion,
+                habitacion, nombre, edad, diagnostico, clasificacion, reposo,
                 indicaciones: 1,
                 sesionesRealizadas: [false],
                 sesionesRCE: [false],
@@ -778,6 +811,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 paciente.edad = edad;
                 paciente.diagnostico = diagnostico;
                 paciente.clasificacion = clasificacion;
+                paciente.reposo = reposo;
                 
                 await guardarPacienteDB(paciente);
                 
@@ -920,6 +954,39 @@ document.addEventListener('DOMContentLoaded', async function() {
         const urlWhatsApp = `https://wa.me/?text=${mensajeCodificado}`;
         window.open(urlWhatsApp, '_blank');
     };
+    
+    // ===== AMPLIAR IMAGEN =====
+    
+    window.ampliarImagen = function() {
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('imageModalImg');
+        const processedImage = document.getElementById('processedImage');
+        const imagePreview = document.getElementById('imagePreview');
+        
+        // Usar la imagen procesada o la vista previa
+        const imgSrc = window.lastProcessedImageSrc || processedImage?.src || imagePreview?.src;
+        
+        if (imgSrc && modal && modalImg) {
+            modalImg.src = imgSrc;
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Prevenir scroll
+        }
+    };
+    
+    window.cerrarImagenAmpliada = function() {
+        const modal = document.getElementById('imageModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = ''; // Restaurar scroll
+        }
+    };
+    
+    // Cerrar modal con tecla Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            window.cerrarImagenAmpliada();
+        }
+    });
     
     // ===== DICTADO DE VOZ (Speech Recognition) =====
     initVoiceDictation();

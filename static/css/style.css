@@ -311,6 +311,107 @@ section > p {
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     margin-bottom: 15px;
+    cursor: pointer;
+}
+
+/* Imagen procesada visible */
+.processed-image-container {
+    margin-top: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+}
+
+.processed-image-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.processed-image-header span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-view-image {
+    background: var(--azul-primario);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+}
+
+.btn-view-image:hover {
+    background: var(--verde-primario);
+    transform: scale(1.05);
+}
+
+#processedImage {
+    width: 100%;
+    max-height: 120px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+#processedImage:hover {
+    opacity: 0.9;
+}
+
+/* Modal para ampliar imagen */
+.image-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+}
+
+.image-modal-content {
+    position: relative;
+    max-width: 95%;
+    max-height: 95%;
+}
+
+.image-modal-close {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 5px 15px;
+}
+
+.image-modal-close:hover {
+    color: #ff6b6b;
+}
+
+#imageModalImg {
+    max-width: 100%;
+    max-height: 85vh;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
 .preview-actions {
@@ -626,13 +727,38 @@ section > p {
 }
 
 .d-name {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-weight: 600;
     font-size: 0.9rem;
     color: #333;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Badges de reposo */
+.reposo-badge {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 8px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.reposo-absoluto {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+}
+
+.reposo-relativo {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fcd34d;
 }
 
 .d-sub {

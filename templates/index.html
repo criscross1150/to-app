@@ -75,10 +75,29 @@
                 
                 <div class="preview-container" id="previewContainer" style="display: none;">
                     <h3>Vista previa</h3>
-                    <img id="imagePreview" src="" alt="Vista previa">
+                    <img id="imagePreview" src="" alt="Vista previa" onclick="window.ampliarImagen()">
                     <div class="preview-actions">
                         <button class="btn btn-secondary" id="btnCambiar">Cambiar imagen</button>
                         <button class="btn btn-primary" id="btnProcesar">Procesar imagen</button>
+                    </div>
+                </div>
+                
+                <!-- Imagen procesada (se mantiene visible después de procesar) -->
+                <div class="processed-image-container" id="processedImageContainer" style="display: none;">
+                    <div class="processed-image-header">
+                        <span><i data-lucide="image" class="icon-xs"></i> Planilla cargada</span>
+                        <button class="btn-view-image" onclick="window.ampliarImagen()" title="Ver imagen completa">
+                            <i data-lucide="maximize-2" class="icon-xs"></i>
+                        </button>
+                    </div>
+                    <img id="processedImage" src="" alt="Planilla procesada" onclick="window.ampliarImagen()">
+                </div>
+                
+                <!-- Modal para ampliar imagen -->
+                <div class="image-modal" id="imageModal" style="display: none;" onclick="window.cerrarImagenAmpliada()">
+                    <div class="image-modal-content" onclick="event.stopPropagation()">
+                        <button class="image-modal-close" onclick="window.cerrarImagenAmpliada()">&times;</button>
+                        <img id="imageModalImg" src="" alt="Imagen ampliada">
                     </div>
                 </div>
                 

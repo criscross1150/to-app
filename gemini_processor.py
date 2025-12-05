@@ -92,8 +92,10 @@ Para cada paciente de la fecha más reciente necesito:
 - Edad: número
 - DG: código de diagnóstico (número del 1 al 32)
 - INDICACION: número de indicaciones (usualmente 1)
+- REPOSO: tipo de reposo si está indicado ("absoluto", "relativo", o "no" si no tiene indicación de reposo)
 
 Las columnas de la tabla son: FECHA | MODO | HABIT | INDICACION | NOMBRE | APELLIDO | APELLIDO | Edad | DG | REVISION | COD
+Si hay una columna de REPOSO o alguna indicación de reposo absoluto o relativo, extráela.
 
 Responde SOLO con un JSON válido en este formato exacto, sin texto adicional:
 {
@@ -106,12 +108,13 @@ Responde SOLO con un JSON válido en este formato exacto, sin texto adicional:
             "apellido2": "ANDRADES",
             "edad": 62,
             "dg": 9,
-            "indicacion": 1
+            "indicacion": 1,
+            "reposo": "no"
         }
     ]
 }
 
-Si no puedes leer algún dato, usa valores por defecto: edad=50, dg=18, indicacion=1.
+Si no puedes leer algún dato, usa valores por defecto: edad=50, dg=18, indicacion=1, reposo="no".
 Recuerda: SOLO pacientes de la fecha MÁS RECIENTE visible en la tabla."""
 
         # Enviar a Gemini
@@ -166,13 +169,21 @@ Recuerda: SOLO pacientes de la fecha MÁS RECIENTE visible en la tabla."""
             except:
                 indicacion = 1
             
+            # Obtener reposo
+            reposo = p.get('reposo', 'no')
+            if reposo and reposo.lower() in ['absoluto', 'relativo']:
+                reposo = reposo.lower()
+            else:
+                reposo = 'no'
+            
             paciente = {
                 'habitacion': habitacion,
                 'nombre': nombre_completo if nombre_completo else 'PACIENTE',
                 'edad': edad,
                 'diagnostico': obtener_diagnostico(dg),
                 'indicaciones': indicacion,
-                'clasificacion': clasificar_habitacion(habitacion)
+                'clasificacion': clasificar_habitacion(habitacion),
+                'reposo': reposo
             }
             
             # Evitar duplicados
