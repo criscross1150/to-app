@@ -271,6 +271,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         const reader = new FileReader();
         reader.onload = (e) => {
             imagePreview.src = e.target.result;
+            // Guardar inmediatamente la imagen para poder ampliarla después
+            window.lastProcessedImageSrc = e.target.result;
             uploadArea.style.display = 'none';
             previewContainer.style.display = 'block';
         };
@@ -963,13 +965,26 @@ document.addEventListener('DOMContentLoaded', async function() {
         const processedImage = document.getElementById('processedImage');
         const imagePreview = document.getElementById('imagePreview');
         
-        // Usar la imagen procesada o la vista previa
-        const imgSrc = window.lastProcessedImageSrc || processedImage?.src || imagePreview?.src;
+        // Buscar la mejor fuente de imagen disponible
+        let imgSrc = null;
+        
+        if (window.lastProcessedImageSrc) {
+            imgSrc = window.lastProcessedImageSrc;
+        } else if (processedImage && processedImage.src && !processedImage.src.endsWith('/')) {
+            imgSrc = processedImage.src;
+        } else if (imagePreview && imagePreview.src && !imagePreview.src.endsWith('/')) {
+            imgSrc = imagePreview.src;
+        }
+        
+        console.log('Ampliar imagen - src:', imgSrc);
         
         if (imgSrc && modal && modalImg) {
             modalImg.src = imgSrc;
             modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden'; // Prevenir scroll
+            document.body.style.overflow = 'hidden';
+        } else {
+            console.log('No se pudo ampliar: modal=', modal, 'modalImg=', modalImg, 'imgSrc=', imgSrc);
+            alert('No hay imagen para mostrar');
         }
     };
     
