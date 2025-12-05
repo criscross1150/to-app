@@ -130,5 +130,80 @@ def procesar():
         print(f"Error: {e}")
         return jsonify({'success': False, 'error': f'Error procesando imagen: {str(e)}'})
 
+@app.route('/generar-evolucion', methods=['POST'])
+@login_required
+def generar_evolucion():
+    """Endpoint para generar texto de evolución con IA basado en los datos del formulario"""
+    global GEMINI_API_KEY
+    
+    if not GEMINI_API_KEY:
+        return jsonify({
+            'success': False, 
+            'error': 'API Key de Gemini no configurada'
+        })
+    
+    try:
+        import google.generativeai as genai
+        
+        data = request.get_json()
+        paciente = data.get('paciente', {})
+        formData = data.get('formData', {})
+        
+        # Construir el prompt para Gemini
+        prompt = f"""Eres un Terapeuta Ocupacional experto redactando evoluciones clínicas para el registro clínico electrónico (RCE) hospitalario.
+
+DATOS DEL PACIENTE:
+- Habitación: {paciente.get('habitacion', 'N/A')}
+- Nombre: {paciente.get('nombre', 'N/A')}
+
+EVALUACIÓN REALIZADA:
+- Estado de conciencia: {formData.get('conciencia', 'No evaluado')}
+- Nivel de colaboración: {formData.get('colaboracion', 'No evaluado')}
+- Orientación témporo-espacial: {formData.get('orientacion', 'No evaluado')}
+- Estado anímico: {formData.get('animo', 'No evaluado')}
+- Condición funcional: {formData.get('movilidad', 'No evaluado')}
+
+INTERVENCIONES REALIZADAS:
+{', '.join(formData.get('intervenciones', [])) if formData.get('intervenciones') else 'Ninguna registrada'}
+
+SESIÓN CONJUNTA CON:
+{', '.join(formData.get('sesionConjunta', [])) if formData.get('sesionConjunta') else 'Sesión individual'}
+
+OBSERVACIONES ADICIONALES:
+{formData.get('observaciones', 'Sin observaciones adicionales')}
+
+INSTRUCCIONES:
+1. Redacta una evolución clínica breve (máximo 5 líneas)
+2. Usa lenguaje técnico de Terapia Ocupacional
+3. Sé preciso y conciso
+4. Incluye solo la información relevante proporcionada
+5. NO incluyas el nombre del paciente ni habitación en el texto
+6. Comienza directamente con el estado del paciente
+7. Termina con el plan o indicaciones si corresponde
+
+FORMATO ESPERADO (ejemplo):
+"Paciente se presenta alerta, colaborador, orientado en T/E/P. Se realiza sesión de TOR y estimulación cognitiva con buena respuesta. Mantiene atención sostenida por 15 minutos. Se sugiere continuar intervención diaria."
+
+Genera la evolución:"""
+
+        genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-2.0-flash')
+        
+        response = model.generate_content(prompt)
+        texto_generado = response.text.strip()
+        
+        # Limpiar comillas si las hay
+        if texto_generado.startswith('"') and texto_generado.endswith('"'):
+            texto_generado = texto_generado[1:-1]
+        
+        return jsonify({
+            'success': True,
+            'texto': texto_generado
+        })
+        
+    except Exception as e:
+        print(f"Error generando evolución: {e}")
+        return jsonify({'success': False, 'error': f'Error generando evolución: {str(e)}'})
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1620,7 +1620,37 @@ section > p {
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
+}
+
+/* Botón de generar con IA */
+.btn-ai-generate {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #8b5cf6, #d946ef);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
     margin-left: auto;
+}
+
+.btn-ai-generate:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+}
+
+.btn-ai-generate.generating {
+    animation: pulse-ai 1.5s infinite;
+}
+
+@keyframes pulse-ai {
+    0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); }
+    70% { box-shadow: 0 0 0 12px rgba(139, 92, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
 }
 
 .btn-record-mini:hover {

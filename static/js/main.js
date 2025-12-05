@@ -1129,6 +1129,12 @@ function initVoiceDictation() {
         btnCopyPreview.addEventListener('click', copyEvolutionPreview);
     }
     
+    // Botón generar con IA
+    const btnGenerateAI = document.getElementById('btnGenerateAI');
+    if (btnGenerateAI) {
+        btnGenerateAI.addEventListener('click', generateEvolutionWithAI);
+    }
+    
     // Poblar selector de pacientes
     const patientSelect = document.getElementById('patientSelect');
     if (patientSelect && window.pacientesData && window.pacientesData.length > 0) {
@@ -1292,6 +1298,93 @@ function showEvolutionPreview() {
         previewContent.textContent = texto;
         evolutionPreview.style.display = 'block';
         evolutionPreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+// Generar evolución con IA
+async function generateEvolutionWithAI() {
+    const patientSelect = document.getElementById('patientSelect');
+    const transcriptionText = document.getElementById('transcriptionText');
+    const btnGenerateAI = document.getElementById('btnGenerateAI');
+    const recordStatus = document.getElementById('recordStatus');
+    
+    if (!patientSelect || patientSelect.value === '') {
+        alert('Selecciona un paciente primero');
+        return;
+    }
+    
+    const paciente = window.pacientesData[parseInt(patientSelect.value)];
+    if (!paciente) {
+        alert('Error: paciente no encontrado');
+        return;
+    }
+    
+    const formData = getEvolutionFormData();
+    
+    // Verificar que hay al menos algo seleccionado
+    const hayDatos = formData.conciencia || formData.colaboracion || formData.orientacion || 
+                     formData.animo || formData.movilidad || formData.intervenciones.length > 0;
+    
+    if (!hayDatos) {
+        alert('Marca al menos una característica o intervención para generar la evolución');
+        return;
+    }
+    
+    // Mostrar estado de carga
+    btnGenerateAI.classList.add('generating');
+    recordStatus.textContent = 'Generando evolución con IA...';
+    recordStatus.classList.add('active');
+    
+    try {
+        const response = await fetch('/generar-evolucion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                paciente: {
+                    habitacion: paciente.habitacion,
+                    nombre: paciente.nombre
+                },
+                formData: formData
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Agregar el texto generado al textarea
+            const textoActual = transcriptionText.value.trim();
+            if (textoActual) {
+                transcriptionText.value = textoActual + '\n\n' + result.texto;
+            } else {
+                transcriptionText.value = result.texto;
+            }
+            transcriptionText.scrollTop = transcriptionText.scrollHeight;
+            recordStatus.textContent = '✓ Evolución generada con IA';
+            
+            setTimeout(() => {
+                recordStatus.textContent = 'Toca el micrófono para dictar o ✨ para generar con IA';
+                recordStatus.classList.remove('active');
+            }, 3000);
+        } else {
+            alert('Error: ' + result.error);
+            recordStatus.textContent = 'Error al generar';
+            setTimeout(() => {
+                recordStatus.textContent = 'Toca el micrófono para dictar o ✨ para generar con IA';
+                recordStatus.classList.remove('active');
+            }, 2000);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error de conexión al generar evolución');
+        recordStatus.textContent = 'Error de conexión';
+        setTimeout(() => {
+            recordStatus.textContent = 'Toca el micrófono para dictar o ✨ para generar con IA';
+            recordStatus.classList.remove('active');
+        }, 2000);
+    } finally {
+        btnGenerateAI.classList.remove('generating');
     }
 }
 
