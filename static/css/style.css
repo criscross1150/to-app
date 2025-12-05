@@ -1562,6 +1562,51 @@ section > p {
     color: var(--verde-primario);
 }
 
+/* Sesión conjunta */
+.joint-session {
+    margin-top: 15px;
+    padding-top: 12px;
+    border-top: 1px dashed #ddd;
+}
+
+.joint-options {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.joint-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.joint-option:hover {
+    border-color: #ff9800;
+    background: #fff8e1;
+}
+
+.joint-option input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #ff9800;
+}
+
+.joint-option:has(input:checked) {
+    background: #fff3e0;
+    border-color: #ff9800;
+    color: #e65100;
+    font-weight: 500;
+}
+
 /* Botón de micrófono mini en step 3 */
 .btn-record-mini {
     width: 36px;

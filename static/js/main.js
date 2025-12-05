@@ -1201,6 +1201,7 @@ function getEvolutionFormData() {
         animo: document.querySelector('input[name="animo"]:checked')?.value || '',
         movilidad: document.querySelector('input[name="movilidad"]:checked')?.value || '',
         intervenciones: Array.from(document.querySelectorAll('input[name="intervencion"]:checked')).map(cb => cb.value),
+        sesionConjunta: Array.from(document.querySelectorAll('input[name="sesion_conjunta"]:checked')).map(cb => cb.value),
         observaciones: document.getElementById('transcriptionText')?.value?.trim() || ''
     };
 }
@@ -1227,6 +1228,11 @@ function formatEvolutionText(data, paciente) {
         texto += `Intervención: ${data.intervenciones.join(', ')}.\n\n`;
     }
     
+    // Sesión conjunta
+    if (data.sesionConjunta && data.sesionConjunta.length > 0) {
+        texto += `Sesión conjunta con: ${data.sesionConjunta.join(' y ')}.\n\n`;
+    }
+    
     // Observaciones
     if (data.observaciones) {
         texto += `Observaciones: ${data.observaciones}`;
@@ -1246,6 +1252,7 @@ function clearEvolutionForm() {
     
     // Limpiar checkboxes
     document.querySelectorAll('input[name="intervencion"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('input[name="sesion_conjunta"]').forEach(cb => cb.checked = false);
     
     // Limpiar textarea
     const transcription = document.getElementById('transcriptionText');
