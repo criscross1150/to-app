@@ -111,23 +111,30 @@ def procesar():
         # Guardar imagen temporalmente
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_image.jpg')
         file.save(filepath)
+        print(f"[PROCESAR] Imagen guardada: {filepath}")
+        print(f"[PROCESAR] API Key presente: {bool(GEMINI_API_KEY)}")
+        print(f"[PROCESAR] Longitud API Key: {len(GEMINI_API_KEY) if GEMINI_API_KEY else 0}")
         
         # Procesar con Gemini
         pacientes = procesar_imagen_gemini(filepath, GEMINI_API_KEY)
         
         if not pacientes:
+            print("[PROCESAR] No se encontraron pacientes")
             return jsonify({
                 'success': False, 
                 'error': 'No se pudieron extraer datos de la imagen. Intenta con una foto más clara.'
             })
         
+        print(f"[PROCESAR] Éxito: {len(pacientes)} pacientes encontrados")
         return jsonify({
             'success': True,
             'pacientes': pacientes
         })
         
     except Exception as e:
-        print(f"Error: {e}")
+        import traceback
+        print(f"[PROCESAR ERROR] {e}")
+        traceback.print_exc()
         return jsonify({'success': False, 'error': f'Error procesando imagen: {str(e)}'})
 
 @app.route('/generar-evolucion', methods=['POST'])
