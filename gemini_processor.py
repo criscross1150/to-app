@@ -70,11 +70,27 @@ def procesar_imagen_gemini(imagen_path, api_key):
         # Configurar Gemini
         genai.configure(api_key=api_key)
         
-        # Usar Gemini 2.0 Flash (estable y con visión)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        print(f"[GEMINI] Intentando procesar imagen: {imagen_path}")
+        
+        # Intentar con diferentes modelos (por orden de preferencia)
+        modelos = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
+        model = None
+        
+        for modelo_nombre in modelos:
+            try:
+                model = genai.GenerativeModel(modelo_nombre)
+                print(f"[GEMINI] Usando modelo: {modelo_nombre}")
+                break
+            except Exception as e:
+                print(f"[GEMINI] Modelo {modelo_nombre} no disponible: {e}")
+                continue
+        
+        if not model:
+            raise Exception("No se pudo inicializar ningún modelo de Gemini")
         
         # Cargar imagen
         imagen = Image.open(imagen_path)
+        print(f"[GEMINI] Imagen cargada: {imagen.size}")
         
         # Prompt específico para extraer datos de la planilla
         prompt = """Analiza esta imagen de una planilla de Excel con datos de pacientes hospitalizados.
@@ -118,12 +134,21 @@ Si no puedes leer algún dato, usa valores por defecto: edad=50, dg=18, indicaci
 Recuerda: SOLO pacientes de la fecha MÁS RECIENTE visible en la tabla."""
 
         # Enviar a Gemini
+        print("[GEMINI] Enviando imagen a Gemini...")
         response = model.generate_content([prompt, imagen])
+        
+        # Verificar si hay respuesta
+        if not response or not response.text:
+            print("[GEMINI] Respuesta vacía de Gemini")
+            # Intentar obtener más info del error
+            if hasattr(response, 'prompt_feedback'):
+                print(f"[GEMINI] Feedback: {response.prompt_feedback}")
+            return []
         
         # Obtener texto de respuesta
         texto_respuesta = response.text
         print("=== RESPUESTA GEMINI ===")
-        print(texto_respuesta)
+        print(texto_respuesta[:500] if len(texto_respuesta) > 500 else texto_respuesta)
         print("=== FIN RESPUESTA ===")
         
         # Limpiar respuesta (quitar markdown si existe)
