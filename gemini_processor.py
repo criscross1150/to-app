@@ -92,46 +92,28 @@ def procesar_imagen_gemini(imagen_path, api_key):
         imagen = Image.open(imagen_path)
         print(f"[GEMINI] Imagen cargada: {imagen.size}")
         
-        # Prompt específico para extraer datos de la planilla
-        prompt = """Analiza esta imagen de una planilla de Excel con datos de pacientes hospitalizados.
+        # Prompt simplificado y más robusto
+        prompt = """Analiza esta imagen que contiene una tabla o planilla con datos de pacientes.
 
-IMPORTANTE: La planilla tiene una columna FECHA. Debes:
-1. Identificar TODAS las fechas que aparecen en la tabla
-2. Determinar cuál es la FECHA MÁS RECIENTE (la más actual)
-3. Extraer SOLO los pacientes de esa fecha más reciente
+Extrae la información de TODOS los pacientes que puedas ver en la imagen.
 
-Para cada paciente de la fecha más reciente necesito:
-- HABIT (habitación): número de 3 dígitos, puede tener letra (ej: 208, 148A, 305)
-- NOMBRE: primer nombre del paciente
-- APELLIDO: apellido paterno
-- APELLIDO2: apellido materno (si está visible)
-- Edad: número
-- DG: código de diagnóstico (número del 1 al 32)
-- INDICACION: número de indicaciones (usualmente 1)
-- REPOSO: tipo de reposo si está indicado ("absoluto", "relativo", o "no" si no tiene indicación de reposo)
+Para cada paciente necesito (en formato JSON):
+- habitacion: número de habitación (ej: "208", "305A")
+- nombre: nombre del paciente
+- apellido1: primer apellido
+- apellido2: segundo apellido (si existe)
+- edad: edad en años (número)
+- dg: código de diagnóstico (número del 1 al 32, usa 19 si no está claro)
+- indicacion: número de indicaciones (1 o 2)
+- reposo: "absoluto", "relativo" o "no"
 
-Las columnas de la tabla son: FECHA | MODO | HABIT | INDICACION | NOMBRE | APELLIDO | APELLIDO | Edad | DG | REVISION | COD
-Si hay una columna de REPOSO o alguna indicación de reposo absoluto o relativo, extráela.
+IMPORTANTE: 
+- Si hay una columna de FECHA, extrae solo los pacientes de la fecha más reciente
+- Si no puedes leer algún dato, usa valores por defecto
+- Responde ÚNICAMENTE con JSON válido, sin texto adicional
 
-Responde SOLO con un JSON válido en este formato exacto, sin texto adicional:
-{
-    "fecha_seleccionada": "30-11-2025",
-    "pacientes": [
-        {
-            "habitacion": "208",
-            "nombre": "MISAEL",
-            "apellido1": "SANCHEZ",
-            "apellido2": "ANDRADES",
-            "edad": 62,
-            "dg": 9,
-            "indicacion": 1,
-            "reposo": "no"
-        }
-    ]
-}
-
-Si no puedes leer algún dato, usa valores por defecto: edad=50, dg=18, indicacion=1, reposo="no".
-Recuerda: SOLO pacientes de la fecha MÁS RECIENTE visible en la tabla."""
+Formato de respuesta:
+{"fecha_seleccionada": "16-12-2025", "pacientes": [{"habitacion": "208", "nombre": "JUAN", "apellido1": "PEREZ", "apellido2": "SOTO", "edad": 65, "dg": 9, "indicacion": 1, "reposo": "no"}]}"""
 
         # Enviar a Gemini
         print("[GEMINI] Enviando imagen a Gemini...")
@@ -148,18 +130,29 @@ Recuerda: SOLO pacientes de la fecha MÁS RECIENTE visible en la tabla."""
         # Obtener texto de respuesta
         texto_respuesta = response.text
         print("=== RESPUESTA GEMINI ===")
-        print(texto_respuesta[:500] if len(texto_respuesta) > 500 else texto_respuesta)
+        print(texto_respuesta[:1000] if len(texto_respuesta) > 1000 else texto_respuesta)
         print("=== FIN RESPUESTA ===")
         
         # Limpiar respuesta (quitar markdown si existe)
         texto_limpio = texto_respuesta.strip()
-        if texto_limpio.startswith('```json'):
-            texto_limpio = texto_limpio[7:]
-        if texto_limpio.startswith('```'):
-            texto_limpio = texto_limpio[3:]
-        if texto_limpio.endswith('```'):
-            texto_limpio = texto_limpio[:-3]
+        
+        # Remover bloques de código markdown
+        if '```json' in texto_limpio:
+            texto_limpio = texto_limpio.split('```json')[1]
+        if '```' in texto_limpio:
+            texto_limpio = texto_limpio.split('```')[0]
         texto_limpio = texto_limpio.strip()
+        
+        # Buscar el JSON dentro del texto si no empieza con {
+        if not texto_limpio.startswith('{'):
+            inicio = texto_limpio.find('{')
+            if inicio != -1:
+                # Encontrar el último }
+                fin = texto_limpio.rfind('}')
+                if fin != -1:
+                    texto_limpio = texto_limpio[inicio:fin+1]
+        
+        print(f"[GEMINI] JSON limpio: {texto_limpio[:200]}...")
         
         # Parsear JSON
         datos = json.loads(texto_limpio)
