@@ -92,28 +92,34 @@ def procesar_imagen_gemini(imagen_path, api_key):
         imagen = Image.open(imagen_path)
         print(f"[GEMINI] Imagen cargada: {imagen.size}")
         
-        # Prompt simplificado y más robusto
-        prompt = """Analiza esta imagen que contiene una tabla o planilla con datos de pacientes.
+        # Prompt específico para la planilla
+        prompt = """Eres un extractor de datos. Analiza esta imagen de una planilla Excel con pacientes hospitalizados.
 
-Extrae la información de TODOS los pacientes que puedas ver en la imagen.
+La tabla tiene estas columnas (de izquierda a derecha):
+- Número de fila
+- FECHA (formato DD-MM-YYYY)
+- Letra (A, B, etc)
+- HABITACIÓN (número de 3 dígitos o "UCID")
+- INDICACIÓN (número)
+- NOMBRE (primer nombre del paciente)
+- APELLIDO PATERNO
+- APELLIDO MATERNO
+- EDAD (número)
+- DG (código diagnóstico, número)
+- Otro número
+- Código
+- Posible indicador de REPOSO
+- ID
 
-Para cada paciente necesito (en formato JSON):
-- habitacion: número de habitación (ej: "208", "305A")
-- nombre: nombre del paciente
-- apellido1: primer apellido
-- apellido2: segundo apellido (si existe)
-- edad: edad en años (número)
-- dg: código de diagnóstico (número del 1 al 32, usa 19 si no está claro)
-- indicacion: número de indicaciones (1 o 2)
-- reposo: "absoluto", "relativo" o "no"
+INSTRUCCIONES:
+1. Identifica la FECHA MÁS RECIENTE en la tabla (ej: 15-12-2025 es más reciente que 14-12-2025)
+2. Extrae SOLO las filas con esa fecha más reciente
+3. Devuelve un JSON con los pacientes
 
-IMPORTANTE: 
-- Si hay una columna de FECHA, extrae solo los pacientes de la fecha más reciente
-- Si no puedes leer algún dato, usa valores por defecto
-- Responde ÚNICAMENTE con JSON válido, sin texto adicional
+Responde SOLO con este JSON (sin texto adicional):
+{"fecha_seleccionada":"15-12-2025","pacientes":[{"habitacion":"204","nombre":"MARIA","apellido1":"MUÑOZ","apellido2":"PALMA","edad":94,"dg":15,"indicacion":1,"reposo":"no"}]}
 
-Formato de respuesta:
-{"fecha_seleccionada": "16-12-2025", "pacientes": [{"habitacion": "208", "nombre": "JUAN", "apellido1": "PEREZ", "apellido2": "SOTO", "edad": 65, "dg": 9, "indicacion": 1, "reposo": "no"}]}"""
+IMPORTANTE: Responde ÚNICAMENTE el JSON, nada más."""
 
         # Enviar a Gemini
         print("[GEMINI] Enviando imagen a Gemini...")
