@@ -72,21 +72,9 @@ def procesar_imagen_gemini(imagen_path, api_key):
         
         print(f"[GEMINI] Intentando procesar imagen: {imagen_path}")
         
-        # Intentar con diferentes modelos (por orden de preferencia)
-        modelos = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
-        model = None
-        
-        for modelo_nombre in modelos:
-            try:
-                model = genai.GenerativeModel(modelo_nombre)
-                print(f"[GEMINI] Usando modelo: {modelo_nombre}")
-                break
-            except Exception as e:
-                print(f"[GEMINI] Modelo {modelo_nombre} no disponible: {e}")
-                continue
-        
-        if not model:
-            raise Exception("No se pudo inicializar ningún modelo de Gemini")
+        # Usar el modelo más reciente y estable
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        print("[GEMINI] Usando modelo: gemini-2.5-flash")
         
         # Cargar imagen
         imagen = Image.open(imagen_path)
@@ -221,13 +209,19 @@ IMPORTANTE: Responde ÚNICAMENTE el JSON, nada más."""
         return pacientes
         
     except json.JSONDecodeError as e:
-        print(f"Error parseando JSON: {e}")
-        print(f"Texto recibido: {texto_respuesta}")
+        print(f"[GEMINI ERROR] Error parseando JSON: {e}")
+        print(f"[GEMINI ERROR] Texto recibido: {texto_respuesta[:500] if texto_respuesta else 'vacío'}")
         return []
     except Exception as e:
-        print(f"Error procesando imagen con Gemini: {e}")
+        error_str = str(e)
+        print(f"[GEMINI ERROR] {error_str}")
         import traceback
         traceback.print_exc()
+        
+        # Detectar error de cuota
+        if '429' in error_str or 'quota' in error_str.lower() or 'ResourceExhausted' in error_str:
+            raise Exception("CUOTA_AGOTADA: Se excedió el límite de la API de Gemini. Espera unos minutos o usa otra API Key.")
+        
         return []
 
 # Función de prueba
