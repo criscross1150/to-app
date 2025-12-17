@@ -1287,7 +1287,9 @@ function getEvolutionFormData() {
         colaboracion: document.querySelector('input[name="colaboracion"]:checked')?.value || '',
         orientacion: document.querySelector('input[name="orientacion"]:checked')?.value || '',
         animo: document.querySelector('input[name="animo"]:checked')?.value || '',
+        posicion: document.querySelector('input[name="posicion"]:checked')?.value || '',
         movilidad: document.querySelector('input[name="movilidad"]:checked')?.value || '',
+        cognicion: document.querySelector('input[name="cognicion"]:checked')?.value || '',
         intervenciones: Array.from(document.querySelectorAll('input[name="intervencion"]:checked')).map(cb => cb.value),
         sesionConjunta: Array.from(document.querySelectorAll('input[name="sesion_conjunta"]:checked')).map(cb => cb.value),
         observaciones: document.getElementById('transcriptionText')?.value?.trim() || ''
@@ -1305,7 +1307,9 @@ function formatEvolutionText(data, paciente) {
     if (data.colaboracion) caracteristicas.push(data.colaboracion);
     if (data.orientacion) caracteristicas.push(data.orientacion);
     if (data.animo) caracteristicas.push(`Ánimo ${data.animo.toLowerCase()}`);
-    if (data.movilidad) caracteristicas.push(data.movilidad);
+    if (data.posicion) caracteristicas.push(`Intervención ${data.posicion.toLowerCase()}`);
+    if (data.movilidad) caracteristicas.push(`Movilidad ${data.movilidad.toLowerCase()}`);
+    if (data.cognicion) caracteristicas.push(`Función cognitiva ${data.cognicion.toLowerCase()}`);
     
     if (caracteristicas.length > 0) {
         texto += `Estado: ${caracteristicas.join(', ')}.\n\n`;
@@ -1405,7 +1409,8 @@ async function generateEvolutionWithAI() {
     
     // Verificar que hay al menos algo seleccionado
     const hayDatos = formData.conciencia || formData.colaboracion || formData.orientacion || 
-                     formData.animo || formData.movilidad || formData.intervenciones.length > 0;
+                     formData.animo || formData.posicion || formData.movilidad || formData.cognicion ||
+                     formData.intervenciones.length > 0;
     
     if (!hayDatos) {
         alert('Marca al menos una característica o intervención para generar la evolución');
@@ -1526,7 +1531,7 @@ function saveCurrentEvolution() {
     
     // Verificar que hay al menos algo seleccionado
     const hayDatos = formData.conciencia || formData.colaboracion || formData.orientacion || 
-                     formData.animo || formData.movilidad || 
+                     formData.animo || formData.posicion || formData.movilidad || formData.cognicion ||
                      formData.intervenciones.length > 0 || formData.observaciones;
     
     if (!hayDatos) {
