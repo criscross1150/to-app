@@ -37,6 +37,7 @@ def load_user(username):
 
 # API Key de Gemini - SOLO desde variable de entorno (seguro)
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+print(f"[STARTUP] GEMINI_API_KEY configurada: {bool(GEMINI_API_KEY)} (longitud: {len(GEMINI_API_KEY) if GEMINI_API_KEY else 0})")
 
 # Crear carpeta de uploads si no existe
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
